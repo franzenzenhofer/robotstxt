@@ -1,21 +1,26 @@
 main = @
 EventEmitter = require('events').EventEmitter
-parseUri = require('./lib/parseuri.js')
+parseUri = require './lib/parseuri.js'
+_ =  require "underscore"
+_.mixin require 'underscore.string'
 
 #Robot
 #Robot is an EventEmitter
 class RobotMaker extends EventEmitter
   txt = ''
   txtA = []
+  rm = @
   constructor: (@url, @user_agent) ->
     if @url
-      rm.uri = parseUri(@url)
+      @uri = parseUri(@url)
     else
-      console.log "no url given"
+      throw new error "no url given"
+    if @uri
+      @crawl() 
   
   
-  crawl: (protocol=rm.uri.protocol, host=rm.uri.host, port=rm.uri.port, path=rm.uri.path,  user_agent=rm.user_agent, encoding='utf8') ->
-    handler = require(protocol)
+  crawl: (protocol=@uri.protocol, host=@uri.host, port=@uri.port, path=@uri.path,  user_agent=@user_agent, encoding='utf8') ->
+    handler = require protocol
     
     options =
       host: host
@@ -24,22 +29,38 @@ class RobotMaker extends EventEmitter
       path: path
       method: 'GET'
       
-    req = handler.request options, (res) ->
+    req = handler.request options, (res) => 
       res.setEncoding(encoding)
       
-      res.on "data", (chunk) ->
-        rm.txtA.push chunk
-        console.log chunk
+      res.on "data", (chunk) =>
+        txtA.push chunk
       
-      res.on "end", ->
-        console.log "end"
-        rm.txt=rm.txtA.join ''
-        console.log rm.txt
-        rm.emit "crawled", m.txt
+      res.on "end", =>
+        txt=txtA.join ''
+        console.log txt
+        @emit "crawled", txt
+        @parse txt
+      null
+    #todo: set the headers
+    #allow more than one header
+    req.end()
+    null
       
+  parse: (txt=txt) =>
+    console.log txt
+    lineA = txt.split "\n"
+    evaluate = (line) ->
+      line = _.trim line
+      unless _(line).startsWith('#')
+        unless line == ''
+          kvA = line.split " "
+          console.log kvA
+          #uppercase all keys
+      else
+        console.log "----------"
+        console.log line
     
-  
-  parse: (txt=rm.txt) ->
+    evaluate line for line in lineA
     
   
   
@@ -51,6 +72,6 @@ class RobotMaker extends EventEmitter
 #  new Robot*/
 #  
 
-r = new RobotMaker('http:www.google.com/robots.txt', "hiho");
+r = new RobotMaker('http://tupalo.com/robots.txt', "hiho");
 
 

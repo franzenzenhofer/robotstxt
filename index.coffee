@@ -154,7 +154,7 @@ class GateKeeperMaker extends EventEmitter
 /*create a GateKeeper*/
 # /*create = (GateKeeperstxturl, user-agent) ->
 #  new GateKeeper*/
-#  
+#   
 
 r = new GateKeeperMaker('http://tupalo.com/robots.txt', "hiho").on('ready', (r) ->
   console.log r.whatsUp('/fr/s/washere/lazy_load_pics')

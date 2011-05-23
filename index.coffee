@@ -4,14 +4,25 @@ parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
 
-#Robot
-#Robot is an EventEmitter
-class RobotMaker extends EventEmitter
+#GateKeeper
+class GateKeeper
+  isAllowed: (url) ->
+    false
+  isDisallowed: (url) ->
+    false
+  whatsUp: (url) ->
+    r = @groups['*'].rules.map (e) ->
+      e(url)
+    
+  groups: {}
+
+#GateKeeperMaker is an EventEmitter
+class GateKeeperMaker extends EventEmitter
   txt = ''
   txtA = []
-  robot = {}
+  
   rm = @
-  constructor: (@url, @user_agent="a coffee robot") ->
+  constructor: (@url, @user_agent="a coffee GateKeeper") ->
     if @url
       @uri = parseUri(@url)
     else
@@ -53,47 +64,73 @@ class RobotMaker extends EventEmitter
     #console.log txt
     console.log "parse start"
     lineA = txt.split "\n"
-    currUserAgent = false
-    evaluate = (line) ->
+    myGateKeeper = undefined
+    currUserAgentGroup = false
+    evaluate = (line) =>
       line = _.trim line
       unless _(line).startsWith('#')
         unless line == ''
-          kvA = line.split " "
+          kvA = line.split ":"
+
+          
           #only work with valid key value pairs
           if kvA.length<2
             return false
+          
+          kvA = kvA.map (i) ->
+            console.log i
+            _(i).trim()
             
-          kvA[0]=kvA[0].toUpperCase()
+          kvA[0]=kvA[0].toLowerCase()
           console.log kvA
           #uppercase all keys
-          if kvA[0] == 'USER-AGENT:'
-            currUserAgent=robot[kvA[1]]=
-              allow: []
-              disallow: []
-              #noindex: []
-          else if kvA[0] == 'SITEMAP:'
+          if kvA[0] == 'user-agent'
+            #if this is the first group section, create a new gatekeeper
+            if not myGateKeeper
+              myGateKeeper = new GateKeeper()
+            currUserAgentGroup=myGateKeeper.groups[kvA[1].toLowerCase()] = 
+              rules: []
+          
+          else if kvA[0] == 'sitemap'
+              #because we used : to split the line, and there is an : in http://
+              kvA.shift()
+              url = kvA.join ':'
               
           else
             regExStr = kvA[1];
             if regExStr[0] != '/'
-              '/'+regExStr
-              
-            regExStr = regExStr.replace /\*/g,'.*'
+              regExStr='/'+regExStr
+            regExStr = regExStr.replace /\//g,'\\/'
+            #console.log regExStr[regExStr.length-1]
             
-            if kvA[0] == 'DISALLOW:'
-              if currUserAgent
-                currUserAgent.disallow.push (url) ->
-                  console.log 'DISALLOW ->' + kvA[1] + '(' + regExStr + ')'
-                  #if there is a match return length of the rule as priority
-            else if kvA[0] == 'ALLOW:'
-              if currUserAgent
-                currUserAgent.allow.push (url) ->
-                  console.log 'ALLOW ->' + kvA[1]
-            #else if kvA[0] == 'NOINDEX:'
-            # if currUserAgent
-            #   currUserAgent.noindex.push (url) ->
-            #     console.log 'NOINDEX ->' + kvA[1]
-           
+            regExStr = regExStr.replace /\*/g,'.*'
+            if regExStr[regExStr.length-1] != '$'
+              if regExStr[regExStr.length-1] != '*'
+                regExStr=regExStr+'.*'
+            rx = new RegExp regExStr
+            #console.log rx
+            #if kvA[0] == 'disallow'
+            if currUserAgentGroup
+              currUserAgentGroup.rules.push (url) ->
+                if url
+                  #console.log 'URL: '+url
+                  #console.log kvA[0]+' ->' + kvA[1] + '(' + regExStr + ')'
+                  url_match = url.match rx
+                  if url_match
+                    return r =
+                      url: url
+                      priority: kvA[1].length
+                      type: 'disallow'
+                      rule: kvA[1]
+                      regexstr: regExStr
+                      regex: rx
+                      match: url_match
+                  else
+                    false
+                else
+                  console.log kvA[0]+' ->' + kvA[1] + '(' + regExStr + ')'
+                  false
+          
           
           
       else
@@ -101,18 +138,29 @@ class RobotMaker extends EventEmitter
         console.log line
     
     evaluate line for line in lineA
-    console.dir(robot)
-    f() for f in robot['*'].disallow
+    if(myGateKeeper)
+      console.log "emit event ready"
+      @emit "ready", myGateKeeper
+    else
+      console.log "an error happend"
+      @emit "error", myGateKeeper
+    console.dir(myGateKeeper)
+    #f() for f in myGateKeeper.groups['*'].rules
   
   
-/*after the robots.txt is parsed, he throws a ready event*/
+/*after the GateKeepers.txt is parsed, he throws a ready event*/
 /*offers a method called ask which tests the given string*/
 /*returns json */
-/*create a robot*/
-# /*create = (robotstxturl, user-agent) ->
-#  new Robot*/
+/*create a GateKeeper*/
+# /*create = (GateKeeperstxturl, user-agent) ->
+#  new GateKeeper*/
 #  
 
-r = new RobotMaker('http://tupalo.com/robots.txt', "hiho");
+r = new GateKeeperMaker('http://tupalo.com/robots.txt', "hiho").on('ready', (r) ->
+  console.log r.whatsUp('/fr/s/washere/lazy_load_pics')
+  console.log r.whatsUp('/fr/s/dsfjksdhfjlsdlhfgljsdkg/lazy_load_pics')
 
+);
+`setTimeout(function(){ console.log('test')}, 2000);`
 
+#modules.exports = createGateKeeperMaker

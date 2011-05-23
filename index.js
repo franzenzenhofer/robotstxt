@@ -14,10 +14,11 @@
   _ = require("underscore");
   _.mixin(require('underscore.string'));
   RobotMaker = (function() {
-    var rm, txt, txtA;
+    var rm, robot, txt, txtA;
     __extends(RobotMaker, EventEmitter);
     txt = '';
     txtA = [];
+    robot = {};
     rm = RobotMaker;
     function RobotMaker(url, user_agent) {
       this.url = url;
@@ -77,29 +78,88 @@
       return null;
     };
     RobotMaker.prototype.parse = function(txt) {
-      var evaluate, line, lineA, _i, _len, _results;
+      var currUserAgent, evaluate, f, line, lineA, _i, _j, _len, _len2, _ref, _results;
       if (txt == null) {
         txt = txt;
       }
       console.log("parse start");
       lineA = txt.split("\n");
+      currUserAgent = false;
       evaluate = function(line) {
-        var kvA;
+        var kvA, regExStr, rx, url;
         line = _.trim(line);
         if (!_(line).startsWith('#')) {
           if (line !== '') {
-            kvA = line.split(" ");
-            return console.log(kvA);
+            kvA = line.split(":");
+            if (kvA.length < 2) {
+              return false;
+            }
+            kvA = kvA.map(function(i) {
+              console.log(i);
+              return _(i).trim();
+            });
+            kvA[0] = kvA[0].toLowerCase();
+            console.log(kvA);
+            if (kvA[0] === 'user-agent') {
+              return currUserAgent = robot[kvA[1].toLowerCase()] = {
+                rules: []
+              };
+            } else if (kvA[0] === 'sitemap') {
+              kvA.shift();
+              return url = kvA.join(':');
+            } else {
+              regExStr = kvA[1];
+              if (regExStr[0] !== '/') {
+                regExStr = '/' + regExStr;
+              }
+              regExStr = regExStr.replace(/\//g, '\\/');
+              regExStr = regExStr.replace(/\*/g, '.*');
+              if (regExStr[regExStr.length - 1] !== '$') {
+                if (regExStr[regExStr.length - 1] !== '*') {
+                  regExStr = regExStr + '.*';
+                }
+              }
+              rx = new RegExp(regExStr);
+              if (currUserAgent) {
+                return currUserAgent.rules.push(function(url) {
+                  var r, rx_match;
+                  if (url != null) {
+                    console.log('URL: ' + url);
+                    console.log(kvA[0] + ' ->' + kvA[1] + '(' + regExStr + ')');
+                    rx_match = rx.match;
+                    if (rx_match(url)) {
+                      return r = {
+                        priority: kvA[1].lenght,
+                        type: 'disallow',
+                        rule: kvA[1],
+                        regexstr: regExStr,
+                        regex: rx,
+                        match: rx_match
+                      };
+                    } else {
+                      console.log(kvA[0] + ' ->' + kvA[1] + '(' + regExStr + ')');
+                      return false;
+                    }
+                  }
+                });
+              }
+            }
           }
         } else {
           console.log("----------");
           return console.log(line);
         }
       };
-      _results = [];
       for (_i = 0, _len = lineA.length; _i < _len; _i++) {
         line = lineA[_i];
-        _results.push(evaluate(linei));
+        evaluate(line);
+      }
+      console.dir(robot);
+      _ref = robot['*'].rules;
+      _results = [];
+      for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+        f = _ref[_j];
+        _results.push(f());
       }
       return _results;
     };
@@ -110,4 +170,5 @@
   /*returns json */;
   /*create a robot*/;
   r = new RobotMaker('http://tupalo.com/robots.txt', "hiho");
+  setTimeout(function(){ console.log('test')}, 2000);;
 }).call(this);

@@ -21,7 +21,7 @@
     rm = RobotMaker;
     function RobotMaker(url, user_agent) {
       this.url = url;
-      this.user_agent = user_agent;
+      this.user_agent = user_agent != null ? user_agent : "a coffee robot";
       this.parse = __bind(this.parse, this);
       if (this.url) {
         this.uri = parseUri(this.url);
@@ -66,12 +66,13 @@
         }, this));
         res.on("end", __bind(function() {
           txt = txtA.join('');
-          console.log(txt);
+          console.log("crawled end");
           this.emit("crawled", txt);
           return this.parse(txt);
         }, this));
         return null;
       }, this));
+      req.setHeader("User-Agent", user_agent);
       req.end();
       return null;
     };
@@ -80,14 +81,16 @@
       if (txt == null) {
         txt = txt;
       }
-      console.log(txt);
+      console.log("parse start");
       lineA = txt.split("\n");
       evaluate = function(line) {
         var kvA;
         line = _.trim(line);
-        if (!(_(line).startsWith('#') && !line === '')) {
-          kvA = line.split(" ");
-          return console.log(kvA);
+        if (!_(line).startsWith('#')) {
+          if (line !== '') {
+            kvA = line.split(" ");
+            return console.log(kvA);
+          }
         } else {
           console.log("----------");
           return console.log(line);
@@ -96,7 +99,7 @@
       _results = [];
       for (_i = 0, _len = lineA.length; _i < _len; _i++) {
         line = lineA[_i];
-        _results.push(evaluate(line));
+        _results.push(evaluate(linei));
       }
       return _results;
     };

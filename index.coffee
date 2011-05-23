@@ -84,6 +84,7 @@ class RobotMaker extends EventEmitter
               if currUserAgent
                 currUserAgent.disallow.push (url) ->
                   console.log 'DISALLOW ->' + kvA[1] + '(' + regExStr + ')'
+                  #if there is a match return length of the rule as priority
             else if kvA[0] == 'ALLOW:'
               if currUserAgent
                 currUserAgent.allow.push (url) ->

@@ -21,51 +21,60 @@
   GateKeeper = (function() {
     function GateKeeper(user_agent) {
       this.user_agent = user_agent;
+      this.selectGroup(this.user_agent);
       console.log("my user agent");
       console.log(this.user_agent);
     }
     GateKeeper.prototype.isAllowed = function(url, user_agent) {
-      if (user_agent == null) {
-        user_agent = this.user_agent;
-      }
+      var group;
+      this.user_agent = user_agent != null ? user_agent : this.user_agent;
+      group = this.selectGroup(this.user_agent);
       return false;
     };
     GateKeeper.prototype.isDisallowed = function(url, user_agent) {
-      if (user_agent == null) {
-        user_agent = this.user_agent;
-      }
+      var group;
+      this.user_agent = user_agent != null ? user_agent : this.user_agent;
+      group = this.selectGroup(this.user_agent);
       return false;
     };
     GateKeeper.prototype.whatsUp = function(url, user_agent) {
       var group, r;
-      if (user_agent == null) {
-        user_agent = this.user_agent;
-      }
-      group = this.selectGroup(user_agent);
+      this.user_agent = user_agent != null ? user_agent : this.user_agent;
+      group = this.selectGroup(this.user_agent);
       return r = this.groups[group].rules.map(function(e) {
         return e(url);
       });
     };
     GateKeeper.prototype.selectGroup = function(user_agent) {
-      var k, key, keymatch, rkey, _i, _len, _ref;
-      if (user_agent == null) {
-        user_agent = this.user_agent;
+      var k, key, keymatch, rkey, value, _ref;
+      this.user_agent = user_agent != null ? user_agent : this.user_agent;
+      this.user_agent = this.user_agent.toLowerCase();
+      if (this.user_agent_group[this.user_agent]) {
+        console.log('i KNOW THIS USER AGENT ' + this.user_agent_group[this.user_agent]);
+        return this.user_agent_group[this.user_agent];
       }
       k = '*';
+      console.log(this.groups);
       _ref = this.groups;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        key = _ref[_i];
+      for (key in _ref) {
+        value = _ref[key];
         rkey = key.replace(/\*/g, '.*');
         keymatch = user_agent.match(new RegExp(rkey));
         if (keymatch) {
+          console.log(keymatch);
           if (key.length > k.length) {
             k = key;
           }
         }
       }
+      console.log("SELECTED GROUP: " + k);
+      this.user_agent_group[this.user_agent] = k;
       return k;
     };
     GateKeeper.prototype.groups = {};
+    GateKeeper.prototype.user_agent_group = {
+      '*': '*'
+    };
     return GateKeeper;
   })();
   GateKeeperMaker = (function() {
@@ -231,7 +240,7 @@
   /*offers a method called ask which tests the given string*/;
   /*returns json */;
   /*create a GateKeeper*/;
-  r = new GateKeeperMaker('http://www.google.com/robots.txt', "hiho").on('ready', function(r) {
+  r = new GateKeeperMaker('http://www.123people.at/robots.txt', "Googlebot").on('ready', function(r) {
     console.log(r.whatsUp('/fr/s/washere/lazy_load_pics'));
     return console.log(r.whatsUp('/musics'));
   });

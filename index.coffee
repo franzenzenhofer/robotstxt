@@ -13,36 +13,61 @@ RegExp.specialEscape = (str) ->
 
 #GateKeeper
 class GateKeeper
-  constructor: (@user_agent) ->
-    console.log "my user agent"
-    console.log @user_agent
-  isAllowed: (url, user_agent = @user_agent) ->
-    false
-  isDisallowed: (url, user_agent = @user_agent) ->
-    false
-  whatsUp: (url, user_agent = @user_agent) ->
-    group = @selectGroup(user_agent)
+  constructor: (user_agent) ->
+    @setUserAgent(user_agent)
+    
+  isAllowed: (url) ->
+    a = @whatsUp(url)
+    r = true
+    prio = 0
+    collector = {}
+    check = (matchO, allowed = true) ->
+      if allowed is false
+        look_for = 'allow'
+      else
+        look_for = 'disallow'
+      
+      if matchO
+        if matchO.type is 'allow'
+          if matchO.priority > prio
+            r = false
+          if matchO.priority is prio and (r is true or r is undefined)
+            r = undefined
+         
+    check matchO for matchO in a
+    r
+  
+  isDisallowed: (url) ->
+    @isAllowed(url, false)
+  
+  whatsUp: (url) ->
+    group = @getGroup()
     r = @groups[group].rules.map (e) ->
       e(url)
-  
-  selectGroup: (user_agent = @user_agent) ->
-    k = '*'
-    console.log @groups
+      
     
-    for key, value of @groups
-      user_agent = user_agent.toLowerCase()
-      rkey = key.replace /\*/g,'.*'
-      keymatch = user_agent.match(new RegExp rkey)
-      if keymatch
-        console.log keymatch
-        if key.length > k.length
-          k = key
-    console.log "SELECTED GROUP: "+k
-    k
+  
+  setUserAgent: (user_agent) ->
+    @user_agent = user_agent.toLowerCase()
+  
+  getGroup: (user_agent = @user_agent) ->
+    user_agent = user_agent.toLowerCase()
+    if @user_agent_group[user_agent]
+      return @user_agent_group[user_agent]
+    else
+      k = '*'
+      for key, value of @groups
+        rkey = key.replace /\*/g,'.*'
+        keymatch = user_agent.match(new RegExp rkey)
+        if keymatch
+          if key.length > k.length
+            k = key
+      @user_agent_group[user_agent] = k
+      k
     
   groups: {}
-  current_group: '*'
-  current_user_agent: undefined
+  user_agent: null
+  user_agent_group: {'*':'*'}
 
 #GateKeeperMaker is an EventEmitter
 class GateKeeperMaker extends EventEmitter
@@ -77,8 +102,6 @@ class GateKeeperMaker extends EventEmitter
       
       res.on "end", =>
         txt=txtA.join ''
-        #console.log txt
-        console.log "crawled end"
         @emit "crawled", txt
         @parse txt
       null
@@ -89,8 +112,6 @@ class GateKeeperMaker extends EventEmitter
     null
       
   parse: (txt=txt) =>
-    #console.log txt
-    console.log "parse start"
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
@@ -106,11 +127,9 @@ class GateKeeperMaker extends EventEmitter
             return false
           
           kvA = kvA.map (i) ->
-            console.log i
             _(i).trim()
             
           kvA[0]=kvA[0].toLowerCase()
-          console.log kvA
           #uppercase all keys
           if kvA[0] == 'user-agent'
             #if this is the first group section, create a new gatekeeper
@@ -129,22 +148,16 @@ class GateKeeperMaker extends EventEmitter
             if regExStr[0] != '/'
               regExStr='/'+regExStr
             regExStr = RegExp.specialEscape regExStr
-            console.log('------------------')
-            console.log(regExStr)
-            #console.log regExStr[regExStr.length-1]
             
             regExStr = regExStr.replace /\*/g,'.*'
             if regExStr[regExStr.length-1] != '$'
               if regExStr[regExStr.length-1] != '*'
                 regExStr=regExStr+'.*'
             rx = new RegExp regExStr
-            #console.log rx
             #if kvA[0] == 'disallow'
             if currUserAgentGroup
               currUserAgentGroup.rules.push (url) ->
                 if url
-                  #console.log 'URL: '+url
-                  #console.log kvA[0]+' ->' + kvA[1] + '(' + regExStr + ')'
                   url_match = url.match rx
                   if url_match
                     return r =
@@ -158,21 +171,17 @@ class GateKeeperMaker extends EventEmitter
                   else
                     false
                 else
-                  console.log kvA[0]+' ->' + kvA[1] + '(' + regExStr + ')'
                   false
           
           
           
       else
-        console.log "----------"
         console.log line
     
     evaluate line for line in lineA
     if(myGateKeeper)
-      console.log "emit event ready"
       @emit "ready", myGateKeeper
     else
-      console.log "an error happend"
       @emit "error", myGateKeeper
     console.dir(myGateKeeper)
     #f() for f in myGateKeeper.groups['*'].rules
@@ -186,9 +195,13 @@ class GateKeeperMaker extends EventEmitter
 #  new GateKeeper*/
 #   
 
-r = new GateKeeperMaker('http://www.123people.at/robots.txt', "Googlebot").on('ready', (r) ->
+r = new GateKeeperMaker('http://www.123people.at/robots.txt', "Googlebot Was Here").on('ready', (r) ->
   console.log r.whatsUp('/fr/s/washere/lazy_load_pics')
   console.log r.whatsUp('/musics')
+  console.log r.isAllowed('/fr/s/washere/lazy_load_pics')
+  console.log r.isAllowed('/musics')
+  console.log r.isDisallowed('/fr/s/washere/lazy_load_pics')
+  console.log r.isDisallowed('/musics')
 
 );
 `setTimeout(function(){ console.log('test')}, 2000);`

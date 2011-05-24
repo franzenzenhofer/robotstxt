@@ -1,5 +1,5 @@
 (function() {
-  var EventEmitter, RobotMaker, main, parseUri, r, _;
+  var EventEmitter, GateKeeper, GateKeeperMaker, main, parseUri, r, _;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -13,16 +13,70 @@
   parseUri = require('./lib/parseuri.js');
   _ = require("underscore");
   _.mixin(require('underscore.string'));
-  RobotMaker = (function() {
-    var rm, robot, txt, txtA;
-    __extends(RobotMaker, EventEmitter);
+  RegExp.specialEscape = function(str) {
+    var specials;
+    specials = new RegExp("[.+?|()\\[\\]{}\\\\]", "g");
+    return str.replace(specials, "\\$&");
+  };
+  GateKeeper = (function() {
+    function GateKeeper(user_agent) {
+      this.user_agent = user_agent;
+      console.log("my user agent");
+      console.log(this.user_agent);
+    }
+    GateKeeper.prototype.isAllowed = function(url, user_agent) {
+      if (user_agent == null) {
+        user_agent = this.user_agent;
+      }
+      return false;
+    };
+    GateKeeper.prototype.isDisallowed = function(url, user_agent) {
+      if (user_agent == null) {
+        user_agent = this.user_agent;
+      }
+      return false;
+    };
+    GateKeeper.prototype.whatsUp = function(url, user_agent) {
+      var group, r;
+      if (user_agent == null) {
+        user_agent = this.user_agent;
+      }
+      group = this.selectGroup(user_agent);
+      return r = this.groups[group].rules.map(function(e) {
+        return e(url);
+      });
+    };
+    GateKeeper.prototype.selectGroup = function(user_agent) {
+      var k, key, keymatch, rkey, _i, _len, _ref;
+      if (user_agent == null) {
+        user_agent = this.user_agent;
+      }
+      k = '*';
+      _ref = this.groups;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        key = _ref[_i];
+        rkey = key.replace(/\*/g, '.*');
+        keymatch = user_agent.match(new RegExp(rkey));
+        if (keymatch) {
+          if (key.length > k.length) {
+            k = key;
+          }
+        }
+      }
+      return k;
+    };
+    GateKeeper.prototype.groups = {};
+    return GateKeeper;
+  })();
+  GateKeeperMaker = (function() {
+    var rm, txt, txtA;
+    __extends(GateKeeperMaker, EventEmitter);
     txt = '';
     txtA = [];
-    robot = {};
-    rm = RobotMaker;
-    function RobotMaker(url, user_agent) {
+    rm = GateKeeperMaker;
+    function GateKeeperMaker(url, user_agent) {
       this.url = url;
-      this.user_agent = user_agent != null ? user_agent : "a coffee robot";
+      this.user_agent = user_agent != null ? user_agent : "a coffee GateKeeper";
       this.parse = __bind(this.parse, this);
       if (this.url) {
         this.uri = parseUri(this.url);
@@ -33,7 +87,7 @@
         this.crawl();
       }
     }
-    RobotMaker.prototype.crawl = function(protocol, host, port, path, user_agent, encoding) {
+    GateKeeperMaker.prototype.crawl = function(protocol, host, port, path, user_agent, encoding) {
       var handler, options, req;
       if (protocol == null) {
         protocol = this.uri.protocol;
@@ -54,6 +108,7 @@
         encoding = 'utf8';
       }
       handler = require(protocol);
+      this.user_agent = user_agent;
       options = {
         host: host,
         port: !port && port !== "" ? port : protocol === "https" ? 443 : 80,
@@ -77,15 +132,16 @@
       req.end();
       return null;
     };
-    RobotMaker.prototype.parse = function(txt) {
-      var currUserAgent, evaluate, f, line, lineA, _i, _j, _len, _len2, _ref, _results;
+    GateKeeperMaker.prototype.parse = function(txt) {
+      var currUserAgentGroup, evaluate, line, lineA, myGateKeeper, _i, _len;
       if (txt == null) {
         txt = txt;
       }
       console.log("parse start");
       lineA = txt.split("\n");
-      currUserAgent = false;
-      evaluate = function(line) {
+      myGateKeeper = void 0;
+      currUserAgentGroup = false;
+      evaluate = __bind(function(line) {
         var kvA, regExStr, rx, url;
         line = _.trim(line);
         if (!_(line).startsWith('#')) {
@@ -101,7 +157,10 @@
             kvA[0] = kvA[0].toLowerCase();
             console.log(kvA);
             if (kvA[0] === 'user-agent') {
-              return currUserAgent = robot[kvA[1].toLowerCase()] = {
+              if (!myGateKeeper) {
+                myGateKeeper = new GateKeeper(this.user_agent);
+              }
+              return currUserAgentGroup = myGateKeeper.groups[kvA[1].toLowerCase()] = {
                 rules: []
               };
             } else if (kvA[0] === 'sitemap') {
@@ -112,7 +171,9 @@
               if (regExStr[0] !== '/') {
                 regExStr = '/' + regExStr;
               }
-              regExStr = regExStr.replace(/\//g, '\\/');
+              regExStr = RegExp.specialEscape(regExStr);
+              console.log('------------------');
+              console.log(regExStr);
               regExStr = regExStr.replace(/\*/g, '.*');
               if (regExStr[regExStr.length - 1] !== '$') {
                 if (regExStr[regExStr.length - 1] !== '*') {
@@ -120,26 +181,27 @@
                 }
               }
               rx = new RegExp(regExStr);
-              if (currUserAgent) {
-                return currUserAgent.rules.push(function(url) {
-                  var r, rx_match;
-                  if (url != null) {
-                    console.log('URL: ' + url);
-                    console.log(kvA[0] + ' ->' + kvA[1] + '(' + regExStr + ')');
-                    rx_match = rx.match;
-                    if (rx_match(url)) {
+              if (currUserAgentGroup) {
+                return currUserAgentGroup.rules.push(function(url) {
+                  var r, url_match;
+                  if (url) {
+                    url_match = url.match(rx);
+                    if (url_match) {
                       return r = {
-                        priority: kvA[1].lenght,
+                        url: url,
+                        priority: kvA[1].length,
                         type: 'disallow',
                         rule: kvA[1],
                         regexstr: regExStr,
                         regex: rx,
-                        match: rx_match
+                        match: url_match
                       };
                     } else {
-                      console.log(kvA[0] + ' ->' + kvA[1] + '(' + regExStr + ')');
                       return false;
                     }
+                  } else {
+                    console.log(kvA[0] + ' ->' + kvA[1] + '(' + regExStr + ')');
+                    return false;
                   }
                 });
               }
@@ -149,26 +211,29 @@
           console.log("----------");
           return console.log(line);
         }
-      };
+      }, this);
       for (_i = 0, _len = lineA.length; _i < _len; _i++) {
         line = lineA[_i];
         evaluate(line);
       }
-      console.dir(robot);
-      _ref = robot['*'].rules;
-      _results = [];
-      for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
-        f = _ref[_j];
-        _results.push(f());
+      if (myGateKeeper) {
+        console.log("emit event ready");
+        this.emit("ready", myGateKeeper);
+      } else {
+        console.log("an error happend");
+        this.emit("error", myGateKeeper);
       }
-      return _results;
+      return console.dir(myGateKeeper);
     };
-    return RobotMaker;
+    return GateKeeperMaker;
   })();
-  /*after the robots.txt is parsed, he throws a ready event*/;
+  /*after the GateKeepers.txt is parsed, he throws a ready event*/;
   /*offers a method called ask which tests the given string*/;
   /*returns json */;
-  /*create a robot*/;
-  r = new RobotMaker('http://tupalo.com/robots.txt', "hiho");
+  /*create a GateKeeper*/;
+  r = new GateKeeperMaker('http://www.google.com/robots.txt', "hiho").on('ready', function(r) {
+    console.log(r.whatsUp('/fr/s/washere/lazy_load_pics'));
+    return console.log(r.whatsUp('/musics'));
+  });
   setTimeout(function(){ console.log('test')}, 2000);;
 }).call(this);

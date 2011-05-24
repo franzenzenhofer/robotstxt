@@ -4,17 +4,45 @@ parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
 
+#helper
+
+RegExp.specialEscape = (str) ->
+  #special as is does not escape * 
+  specials = new RegExp("[.+?|()\\[\\]{}\\\\]", "g")
+  str.replace(specials, "\\$&")
+
 #GateKeeper
 class GateKeeper
-  isAllowed: (url) ->
+  constructor: (@user_agent) ->
+    console.log "my user agent"
+    console.log @user_agent
+  isAllowed: (url, user_agent = @user_agent) ->
     false
-  isDisallowed: (url) ->
+  isDisallowed: (url, user_agent = @user_agent) ->
     false
-  whatsUp: (url) ->
-    r = @groups['*'].rules.map (e) ->
+  whatsUp: (url, user_agent = @user_agent) ->
+    group = @selectGroup(user_agent)
+    r = @groups[group].rules.map (e) ->
       e(url)
+  
+  selectGroup: (user_agent = @user_agent) ->
+    k = '*'
+    console.log @groups
+    
+    for key, value of @groups
+      user_agent = user_agent.toLowerCase()
+      rkey = key.replace /\*/g,'.*'
+      keymatch = user_agent.match(new RegExp rkey)
+      if keymatch
+        console.log keymatch
+        if key.length > k.length
+          k = key
+    console.log "SELECTED GROUP: "+k
+    k
     
   groups: {}
+  current_group: '*'
+  current_user_agent: undefined
 
 #GateKeeperMaker is an EventEmitter
 class GateKeeperMaker extends EventEmitter
@@ -33,7 +61,7 @@ class GateKeeperMaker extends EventEmitter
   
   crawl: (protocol=@uri.protocol, host=@uri.host, port=@uri.port, path=@uri.path,  user_agent=@user_agent, encoding='utf8') ->
     handler = require protocol
-    
+    @user_agent = user_agent
     options =
       host: host
       port: if !port and port != "" then port else
@@ -87,7 +115,7 @@ class GateKeeperMaker extends EventEmitter
           if kvA[0] == 'user-agent'
             #if this is the first group section, create a new gatekeeper
             if not myGateKeeper
-              myGateKeeper = new GateKeeper()
+              myGateKeeper = new GateKeeper(@user_agent)
             currUserAgentGroup=myGateKeeper.groups[kvA[1].toLowerCase()] = 
               rules: []
           
@@ -100,7 +128,9 @@ class GateKeeperMaker extends EventEmitter
             regExStr = kvA[1];
             if regExStr[0] != '/'
               regExStr='/'+regExStr
-            regExStr = regExStr.replace /\//g,'\\/'
+            regExStr = RegExp.specialEscape regExStr
+            console.log('------------------')
+            console.log(regExStr)
             #console.log regExStr[regExStr.length-1]
             
             regExStr = regExStr.replace /\*/g,'.*'
@@ -156,9 +186,9 @@ class GateKeeperMaker extends EventEmitter
 #  new GateKeeper*/
 #   
 
-r = new GateKeeperMaker('http://tupalo.com/robots.txt', "hiho").on('ready', (r) ->
+r = new GateKeeperMaker('http://www.123people.at/robots.txt', "Googlebot").on('ready', (r) ->
   console.log r.whatsUp('/fr/s/washere/lazy_load_pics')
-  console.log r.whatsUp('/fr/s/dsfjksdhfjlsdlhfgljsdkg/lazy_load_pics')
+  console.log r.whatsUp('/musics')
 
 );
 `setTimeout(function(){ console.log('test')}, 2000);`

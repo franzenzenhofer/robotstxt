@@ -1,55 +1,98 @@
-main = @
 EventEmitter = require('events').EventEmitter
 parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
 
-#helper
+#helper functions
 
+#a special escape function 
+#special as is does not escape * 
 RegExp.specialEscape = (str) ->
-  #special as is does not escape * 
   specials = new RegExp("[.+?|()\\[\\]{}\\\\]", "g")
   str.replace(specials, "\\$&")
 
 #GateKeeper
+#GateKeeper gets returned afte a robots.txt is parsed
 class GateKeeper
   constructor: (user_agent) ->
     @setUserAgent(user_agent)
     
-  isAllowed: (url) ->
+  #asks the gatekeeper if a given url is allowed
+  #returnes true if it is allowed
+  #holds a hidden _allowed value that makes this method reuseable for isDisallowed
+  isAllowed: (url, _allowed = true) ->
     a = @whatsUp(url)
     r = true
     prio = 0
-    collector = {}
-    check = (matchO, allowed = true) ->
-      if allowed is false
-        look_for = 'allow'
-      else
-        look_for = 'disallow'
-      
+    check = (matchO) ->
       if matchO
-        if matchO.type is 'allow'
+        if matchO.type is 'disallow'
           if matchO.priority > prio
             r = false
-          if matchO.priority is prio and (r is true or r is undefined)
+          else if matchO.priority is prio and (r is true or r is undefined)
             r = undefined
-         
+        else if matchO.type is 'allow'
+          if matchO.priority > prio
+            r = true
+          else if matchO.priority is prio and (r is false or r is undefined)
+            r = undefined
+    
+    #loop over the rules
     check matchO for matchO in a
-    r
+    
+    if _allowed
+      r
+    else
+      !r
   
+  #returnes true if an url is disallowed for crawling 
   isDisallowed: (url) ->
     @isAllowed(url, false)
   
+  #determines the group to use and iterates over all rules
   whatsUp: (url) ->
     group = @getGroup()
     r = @groups[group].rules.map (e) ->
       e(url)
+  
+  why: (url) ->
+    a = @whatsUp(url)
+    ra = []
+    conflict = false
+    test = (matchO) ->
+      if matchO
+        if not ra[0]
+          ra.push matchO
+        else if matchO.priority > ra[0].priority
+          ra.unshift matchO
+          conflict = false
+        else if matchO.priority < ra[0].priority
+          ra.push matchO
+          conflict = false
+        else if matchO.priority is ra[0].priority
+          if matchO.type is r[0].type
+            ra.push matchO
+          else
+            conflict = true
+            ra.unshift matchO
+    
+    test matchO for matchO in a
+    r = 
+      rules: ra
+      allowed: @isAllowed(url)
+      disallowed: @isDisallowed(url)
+      group: @getGroup()
+      user_agent: @user_agent
+      conflict: conflict
       
     
   
   setUserAgent: (user_agent) ->
     @user_agent = user_agent.toLowerCase()
   
+  #determines which User-Agent group to use
+  #default is *
+  #most specific (longes) rule wins
   getGroup: (user_agent = @user_agent) ->
     user_agent = user_agent.toLowerCase()
     if @user_agent_group[user_agent]
@@ -69,8 +112,8 @@ class GateKeeper
   user_agent: null
   user_agent_group: {'*':'*'}
 
-#GateKeeperMaker is an EventEmitter
-class GateKeeperMaker extends EventEmitter
+#RobotsTxt is an EventEmitter
+class RobotsTxt extends EventEmitter
   txt = ''
   txtA = []
   
@@ -78,9 +121,6 @@ class GateKeeperMaker extends EventEmitter
   constructor: (@url, @user_agent="a coffee GateKeeper") ->
     if @url
       @uri = parseUri(@url)
-    else
-      throw new error "no url given"
-    if @uri
       @crawl() 
   
   
@@ -154,7 +194,6 @@ class GateKeeperMaker extends EventEmitter
               if regExStr[regExStr.length-1] != '*'
                 regExStr=regExStr+'.*'
             rx = new RegExp regExStr
-            #if kvA[0] == 'disallow'
             if currUserAgentGroup
               currUserAgentGroup.rules.push (url) ->
                 if url
@@ -162,8 +201,9 @@ class GateKeeperMaker extends EventEmitter
                   if url_match
                     return r =
                       url: url
+                      line: line
                       priority: kvA[1].length
-                      type: 'disallow'
+                      type: kvA[0]
                       rule: kvA[1]
                       regexstr: regExStr
                       regex: rx
@@ -172,38 +212,17 @@ class GateKeeperMaker extends EventEmitter
                     false
                 else
                   false
-          
-          
-          
       else
-        console.log line
+        #comments line get parse here
     
     evaluate line for line in lineA
     if(myGateKeeper)
       @emit "ready", myGateKeeper
     else
       @emit "error", myGateKeeper
-    console.dir(myGateKeeper)
-    #f() for f in myGateKeeper.groups['*'].rules
-  
-  
-/*after the GateKeepers.txt is parsed, he throws a ready event*/
-/*offers a method called ask which tests the given string*/
-/*returns json */
-/*create a GateKeeper*/
-# /*create = (GateKeeperstxturl, user-agent) ->
-#  new GateKeeper*/
-#   
 
-r = new GateKeeperMaker('http://www.123people.at/robots.txt', "Googlebot Was Here").on('ready', (r) ->
-  console.log r.whatsUp('/fr/s/washere/lazy_load_pics')
-  console.log r.whatsUp('/musics')
-  console.log r.isAllowed('/fr/s/washere/lazy_load_pics')
-  console.log r.isAllowed('/musics')
-  console.log r.isDisallowed('/fr/s/washere/lazy_load_pics')
-  console.log r.isDisallowed('/musics')
+createRobotsTxt = (url, user_agent = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)') ->
+  new RobotsTxt(url, user_agent)
 
-);
-`setTimeout(function(){ console.log('test')}, 2000);`
 
-#modules.exports = createGateKeeperMaker
+module.exports = createRobotsTxt

@@ -1,0 +1,20 @@
+{
+  "name"          : "robotstxt",
+  "description"   : "a robotstxt parser for node.js",
+  "url"           : "https://github.com/franzenzenhofer/robotstxt",
+  "keywords"      : ["robots.txt", "parser", "web", "crawl", "seo"],
+  "author"        : "Franz Enzenhofer <f.enzenhofer@gmail.com>",
+  "contributors"  : [],
+   "licenses": [
+     {
+        "type": "MIT"
+     }
+   ],
+   "dependencies": {
+    "underscore": "*",
+    "underscore.string": "*"
+  }
+,
+  "main"          : "./index.js",
+  "version"       : "0.0.1-0"
+}

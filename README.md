@@ -1,7 +1,10 @@
 robots.txt parser for node.js
 ===
 
-robotstxt is written in coffee script
+  - robotstxt is written in coffee script
+  - robotstxt is currently alpha
+  - robotstxt offers a way to obey the allow/disallow urles listed in the robots.txt
+
 
 Install:
 
@@ -65,12 +68,17 @@ robotsTxt methods
     
 robotsTxt events
 
-  #thrown after the whole robots.txt is crawled
-  robotsTxt.on 'crawled' (txt) -> ...
+    #thrown after the whole robots.txt is crawled
+    robotsTxt.on 'crawled' (txt) -> ...
   
-  #thrown after all lines of the robots.txt are parsed
-  robotsTxt.on 'ready' (gate_keeper)
+    #thrown after all lines of the robots.txt are parsed
+    robotsTxt.on 'ready' (gate_keeper)
   
+
+ToDo
+---
+  - ready event also pass a sitemaps_in_robots_txt object
+  - sitemaps_in_robots_txt should offer methods to collect the urls listed in the sitemap
 
 Resources
 ---

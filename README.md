@@ -3,7 +3,7 @@ robots.txt parser for node.js
 
   - robotstxt is written in coffee script
   - robotstxt is currently alpha
-  - robotstxt offers a way to obey the allow/disallow urles listed in the robots.txt
+  - robotstxt offers an easy way to obey the allow/disallow rules listed in the sites robots.txt
 
 
 Install:

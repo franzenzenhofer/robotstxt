@@ -77,7 +77,7 @@ robotsTxt events
 
 ToDo
 ---
-  - ready event also pass a sitemaps_in_robots_txt object
+  - ready event should also pass a sitemaps_in_robots_txt object
   - sitemaps_in_robots_txt should offer methods to collect the urls listed in the sitemap
 
 Resources

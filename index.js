@@ -282,7 +282,7 @@
   })();
   createRobotsTxt = function(url, user_agent) {
     if (user_agent == null) {
-      user_agent = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+      user_agent = 'Mozilla/5.0 (compatible; Open-Source-Coffee-Script-Robots-Txt-Checker/2.1; +http://example.com/bot.html)';
     }
     return new RobotsTxt(url, user_agent);
   };

@@ -1,6 +1,6 @@
 (function() {
   var r, r2, robotsTxt;
-  robotsTxt = require('robotstxt');
+  robotsTxt = require('../index.js');
   r = robotsTxt('http://www.google.com/robots.txt', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.iamnnotreallyagooglebot.com/)').on('ready', function(gk) {
     console.log(gk.isAllowed('http://www.google.com/setnewsprefs?sfsdfg'));
     console.log(gk.isAllowed('http://www.google.com/gp/richpub/syltguides/create/hudriwudri'));

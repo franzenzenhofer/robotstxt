@@ -34,14 +34,10 @@
           if (matchO.type === 'disallow') {
             if (matchO.priority > prio) {
               return r = false;
-            } else if (matchO.priority === prio && (r === true || r === void 0)) {
-              return r = void 0;
             }
           } else if (matchO.type === 'allow') {
-            if (matchO.priority > prio) {
+            if (matchO.priority >= prio) {
               return r = true;
-            } else if (matchO.priority === prio && (r === false || r === void 0)) {
-              return r = void 0;
             }
           }
         }

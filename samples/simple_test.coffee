@@ -1,7 +1,7 @@
 
 #require the robotsTxt module
-#robotsTxt = require '../index.js'
-robotsTxt = require 'robotstxt'
+robotsTxt = require '../index.js'
+#robotsTxt = require 'robotstxt'
 
 #create a new parser
 #add some callback action

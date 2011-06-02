@@ -29,13 +29,16 @@ class GateKeeper
         if matchO.type is 'disallow'
           if matchO.priority > prio
             r = false
-          else if matchO.priority is prio and (r is true or r is undefined)
-            r = undefined
+          #this undefined is deprecated, as allow always wins  
+          #else if matchO.priority is prio and (r is true or r is undefined)
+            #r = undefined
         else if matchO.type is 'allow'
-          if matchO.priority > prio
+          if matchO.priority >= prio
             r = true
-          else if matchO.priority is prio and (r is false or r is undefined)
-            r = undefined
+          #this undefined is deprecated, as allow always wins
+          #else if matchO.priority is prio and (r is false or r is undefined)
+            #r = undefined
+            
     
     #loop over the rules
     check matchO for matchO in a

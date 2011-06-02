@@ -224,7 +224,7 @@ class RobotsTxt extends EventEmitter
     else
       @emit "error", myGateKeeper
 
-createRobotsTxt = (url, user_agent = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)') ->
+createRobotsTxt = (url, user_agent = 'Mozilla/5.0 (compatible; Open-Source-Coffee-Script-Robots-Txt-Checker/2.1; +http://example.com/bot.html)') ->
   new RobotsTxt(url, user_agent)
 
 

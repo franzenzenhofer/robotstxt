@@ -26,13 +26,13 @@ assign event handler after all that parsing is done
 
     google_robots_txt.on 'ready', (gate_keeper) -> 
       #returns false
-      console.log gk.isAllowed 'http://www.google.com/setnewsprefs?sfsdfg'
+      console.log gate_keeper.isAllowed 'http://www.google.com/setnewsprefs?sfsdfg'
       #returns false
-      console.log gk.isAllowed '/setnewsprefs?sfsdfg'
+      console.log gate_keeper.isAllowed '/setnewsprefs?sfsdfg'
       #returns true
-      console.log gk.isDisallowed 'http://www.google.com/setnewsprefs?sfsdfg' 
+      console.log gate_keeper.isDisallowed 'http://www.google.com/setnewsprefs?sfsdfg' 
       #returns true
-      console.log gk.isDisallowed '/setnewsprefs?sfsdfg'
+      console.log gate_keeper.isDisallowed '/setnewsprefs?sfsdfg'
     
 gate_keeper methods:
 
@@ -58,11 +58,11 @@ robotsTxt methods
     blank_robots_txt = robotsTxt()
     
     #crawls and parses a robots.txt 
-    #throws an 'parsed' event
+    #throws an 'crawled' event
     blank_robots_txt.crawl: (protocol, host, port, path,  user_agent, encoding)
     
     #parses a txt string line after line
-    #throws an 'ready' event
+    #throws a 'ready' event
     blank_robots_txt.parse(txt)
     
     
@@ -73,7 +73,27 @@ robotsTxt events
   
     #thrown after all lines of the robots.txt are parsed
     robotsTxt.on 'ready' (gate_keeper)
-  
+    
+
+**NOTES**
+
+the default user-agent used is
+
+    #robotsTxt(url, user_agent)
+    Mozilla/5.0 (compatible; Open-Source-Coffee-Script-Robots-Txt-Checker/2.1; +http://example.com/bot.html
+    
+i strongly recommend using your own user agent
+
+i.e.:
+
+    myapp_robots_txt = robotsTxt 'http://www.google.com/robots.txt', 'Mozilla/5.0 (compatible; MyAppBot/2.1; +http://www.example.com/)'
+    
+    
+if you want to simulate another crawler (for testing purposes only, of course) see this list for the correct user agent strings 
+
+  - [List of User Agent Strings] (http://www.useragentstring.com/pages/useragentstring.php)
+  - [Googlebot] (http://www.google.com/support/webmasters/bin/answer.py?answer=1061943)
+    
 
 ToDo
 ---

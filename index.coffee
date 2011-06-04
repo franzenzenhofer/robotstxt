@@ -81,6 +81,7 @@ class GateKeeper
     
     test matchO for matchO in a
     r = 
+      url: url
       rules: ra
       allowed: @isAllowed(url)
       disallowed: @isDisallowed(url)

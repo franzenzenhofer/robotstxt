@@ -92,6 +92,7 @@
         test(matchO);
       }
       return r = {
+        url: url,
         rules: ra,
         allowed: this.isAllowed(url),
         disallowed: this.isDisallowed(url),

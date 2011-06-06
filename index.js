@@ -171,6 +171,8 @@
       if (encoding == null) {
         encoding = 'utf8';
       }
+      txt = '';
+      txtA = [];
       handler = require(protocol);
       this.user_agent = user_agent;
       options = {
@@ -196,7 +198,7 @@
       return null;
     };
     RobotsTxt.prototype.parse = function(txt) {
-      var currUserAgentGroup, evaluate, i, line, lineA, myGateKeeper, _i, _len;
+      var currUserAgentGroup, evaluate, line, lineA, line_counter, myGateKeeper, _i, _len;
       if (txt == null) {
         txt = txt;
       }
@@ -270,10 +272,10 @@
           ;
         }
       }, this);
-      i = 0;
+      line_counter = 0;
       for (_i = 0, _len = lineA.length; _i < _len; _i++) {
         line = lineA[_i];
-        evaluate(line, ++i);
+        evaluate(line, ++line_counter);
       }
       if (myGateKeeper) {
         return this.emit("ready", myGateKeeper);

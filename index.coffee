@@ -129,6 +129,8 @@ class RobotsTxt extends EventEmitter
   
   
   crawl: (protocol=@uri.protocol, host=@uri.host, port=@uri.port, path=@uri.path,  user_agent=@user_agent, encoding='utf8') ->
+    txt = ''
+    txtA = []
     handler = require protocol
     @user_agent = user_agent
     options =
@@ -219,8 +221,8 @@ class RobotsTxt extends EventEmitter
                   false
       else
         #comments line get parse here
-    i=0
-    evaluate line, ++i for line in lineA
+    line_counter=0
+    evaluate line, ++line_counter for line in lineA
     if(myGateKeeper)
       @emit "ready", myGateKeeper
     else

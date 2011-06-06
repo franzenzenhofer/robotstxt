@@ -196,14 +196,14 @@
       return null;
     };
     RobotsTxt.prototype.parse = function(txt) {
-      var currUserAgentGroup, evaluate, line, lineA, myGateKeeper, _i, _len;
+      var currUserAgentGroup, evaluate, i, line, lineA, myGateKeeper, _i, _len;
       if (txt == null) {
         txt = txt;
       }
       lineA = txt.split("\n");
       myGateKeeper = void 0;
       currUserAgentGroup = false;
-      evaluate = __bind(function(line) {
+      evaluate = __bind(function(line, nr) {
         var kvA, regExStr, rx, url;
         line = _.trim(line);
         if (!_(line).startsWith('#')) {
@@ -248,6 +248,7 @@
                       return r = {
                         url: url,
                         line: line,
+                        linenumber: nr,
                         priority: kvA[1].length,
                         type: kvA[0],
                         rule: kvA[1],
@@ -269,9 +270,10 @@
           ;
         }
       }, this);
+      i = 0;
       for (_i = 0, _len = lineA.length; _i < _len; _i++) {
         line = lineA[_i];
-        evaluate(line);
+        evaluate(line, ++i);
       }
       if (myGateKeeper) {
         return this.emit("ready", myGateKeeper);

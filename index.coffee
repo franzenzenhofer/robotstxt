@@ -159,7 +159,7 @@ class RobotsTxt extends EventEmitter
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
-    evaluate = (line) =>
+    evaluate = (line, nr) =>
       line = _.trim line
       unless _(line).startsWith('#')
         unless line == ''
@@ -206,6 +206,7 @@ class RobotsTxt extends EventEmitter
                     return r =
                       url: url
                       line: line
+                      linenumber: nr 
                       priority: kvA[1].length
                       type: kvA[0]
                       rule: kvA[1]
@@ -218,8 +219,8 @@ class RobotsTxt extends EventEmitter
                   false
       else
         #comments line get parse here
-    
-    evaluate line for line in lineA
+    i=0
+    evaluate line, ++i for line in lineA
     if(myGateKeeper)
       @emit "ready", myGateKeeper
     else

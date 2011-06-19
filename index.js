@@ -211,7 +211,7 @@
         if (!_(line).startsWith('#')) {
           if (line !== '') {
             kvA = line.split(":");
-            if (kvA.length < 2) {
+            if (kvA.length !== 2) {
               return false;
             }
             kvA = kvA.map(function(i) {

@@ -213,6 +213,8 @@
             kvA = line.split(":");
             if (kvA.length !== 2) {
               return false;
+            } else if (kvA.length === 2 && kvA[1] === '') {
+              return false;
             }
             kvA = kvA.map(function(i) {
               return _(i).trim();

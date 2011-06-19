@@ -171,6 +171,8 @@ class RobotsTxt extends EventEmitter
           #only work with valid key value pairs
           if kvA.length isnt 2
             return false
+          else if kvA.length is 2 and kvA[1] is ''
+            return false
           
           
           

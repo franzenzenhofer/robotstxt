@@ -1,3 +1,4 @@
+#http://code.google.com/web/controlcrawlindex/docs/robots_txt.html
 EventEmitter = require('events').EventEmitter
 parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
@@ -54,11 +55,13 @@ class GateKeeper
   
   #determines the group to use and iterates over all rules
   whatsUp: (url) ->
+    url = @cleanUrl(url)
     group = @getGroup()
     r = @groups[group].rules.map (e) ->
       e(url)
   
   why: (url) ->
+    url = @cleanUrl(url)
     a = @whatsUp(url)
     ra = []
     conflict = false
@@ -88,6 +91,14 @@ class GateKeeper
       group: @getGroup()
       user_agent: @user_agent
       conflict: conflict
+  
+  cleanUrl: (url) ->
+    xu = parseUri(url)
+    if xu.path and xu.path isnt ''
+      if xu.query and xu.query isnt ''
+        return xu.path+'?'+xu.query
+      else
+        return xu.path
       
     
   
@@ -206,6 +217,10 @@ class RobotsTxt extends EventEmitter
             if regExStr[regExStr.length-1] != '$'
               if regExStr[regExStr.length-1] != '*'
                 regExStr=regExStr+'.*'
+                
+            #The path value is used as a basis to determine whether or not a rule applies to a specific URL on a site. With the exception of wildcards, the path is used to match the beginning of a URL (and any valid URLs that start with the same path).
+            
+            regExStr='^'+regExStr
             rx = new RegExp regExStr
             if currUserAgentGroup
               currUserAgentGroup.rules.push (url) ->

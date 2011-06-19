@@ -57,6 +57,7 @@
     };
     GateKeeper.prototype.whatsUp = function(url) {
       var group, r;
+      url = this.cleanUrl(url);
       group = this.getGroup();
       return r = this.groups[group].rules.map(function(e) {
         return e(url);
@@ -64,6 +65,7 @@
     };
     GateKeeper.prototype.why = function(url) {
       var a, conflict, matchO, r, ra, test, _i, _len;
+      url = this.cleanUrl(url);
       a = this.whatsUp(url);
       ra = [];
       conflict = false;
@@ -100,6 +102,17 @@
         user_agent: this.user_agent,
         conflict: conflict
       };
+    };
+    GateKeeper.prototype.cleanUrl = function(url) {
+      var xu;
+      xu = parseUri(url);
+      if (xu.path && xu.path !== '') {
+        if (xu.query && xu.query !== '') {
+          return xu.path + '?' + xu.query;
+        } else {
+          return xu.path;
+        }
+      }
     };
     GateKeeper.prototype.setUserAgent = function(user_agent) {
       return this.user_agent = user_agent.toLowerCase();
@@ -242,6 +255,7 @@
                   regExStr = regExStr + '.*';
                 }
               }
+              regExStr = '^' + regExStr;
               rx = new RegExp(regExStr);
               if (currUserAgentGroup) {
                 return currUserAgentGroup.rules.push(function(url) {

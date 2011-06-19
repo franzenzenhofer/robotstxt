@@ -169,11 +169,15 @@ class RobotsTxt extends EventEmitter
 
           
           #only work with valid key value pairs
-          if kvA.length<2
+          if kvA.length isnt 2
             return false
+          
+          
           
           kvA = kvA.map (i) ->
             _(i).trim()
+            
+          
             
           kvA[0]=kvA[0].toLowerCase()
           #uppercase all keys

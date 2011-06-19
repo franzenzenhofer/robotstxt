@@ -26,10 +26,12 @@ assign event handler after all that parsing is done
 
     google_robots_txt.on 'ready', (gate_keeper) -> 
       #returns false
+      #note: only the path and the query of the url gets parsed, everything else (i.e. http://, the domain-name) gets ditched
       console.log gate_keeper.isAllowed 'http://www.google.com/setnewsprefs?sfsdfg'
       #returns false
       console.log gate_keeper.isAllowed '/setnewsprefs?sfsdfg'
       #returns true
+      #note: only the path and the query of the url gets parsed, everything else (i.e. http://, the domain-name) gets ditched
       console.log gate_keeper.isDisallowed 'http://www.google.com/setnewsprefs?sfsdfg' 
       #returns true
       console.log gate_keeper.isDisallowed '/setnewsprefs?sfsdfg'

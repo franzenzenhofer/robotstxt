@@ -3,7 +3,6 @@ EventEmitter = require('events').EventEmitter
 parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
-
 #helper functions
 
 #a special escape function 
@@ -152,23 +151,31 @@ class RobotsTxt extends EventEmitter
       method: 'GET'
       
     req = handler.request options, (res) => 
-      res.setEncoding(encoding)
-      
-      res.on "data", (chunk) =>
-        txtA.push chunk
-      
-      res.on "end", =>
-        txt=txtA.join ''
-        @emit "crawled", txt
-        @parse txt
-      null
+      if res.statusCode isnt 200
+        @emit "error", new Error 'invalid status code - is: HTTP '+res.statusCode+' - should: HTTP 200'
+      else
+        res.setEncoding(encoding)
+        
+        res.on "data", (chunk) =>
+          txtA.push chunk
+        
+        res.on "end", =>
+          txt=txtA.join ''
+          @emit "crawled", txt
+          @parse txt
+        null
     #set the headers
     req.setHeader "User-Agent",user_agent
     #todo: allow more than one header
     req.end()
     null
+    
+    req.on('error', (e) =>
+        @emit "error", e
+      )
       
   parse: (txt=txt) =>
+    #console.log ('PARSED')
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
@@ -245,11 +252,11 @@ class RobotsTxt extends EventEmitter
         #comments line get parse here
     line_counter=0
     evaluate line, ++line_counter for line in lineA
-    if(myGateKeeper)
+    if myGateKeeper?
       @emit "ready", myGateKeeper
     else
-      @emit "error", myGateKeeper
-
+      @emit "error", 'gatekeeper is '+ typeof myGateKeeper
+      
 createRobotsTxt = (url, user_agent = 'Mozilla/5.0 (compatible; Open-Source-Coffee-Script-Robots-Txt-Checker/2.1; +http://example.com/bot.html)') ->
   new RobotsTxt(url, user_agent)
 

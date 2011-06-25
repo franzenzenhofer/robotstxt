@@ -195,20 +195,27 @@
         method: 'GET'
       };
       req = handler.request(options, __bind(function(res) {
-        res.setEncoding(encoding);
-        res.on("data", __bind(function(chunk) {
-          return txtA.push(chunk);
-        }, this));
-        res.on("end", __bind(function() {
-          txt = txtA.join('');
-          this.emit("crawled", txt);
-          return this.parse(txt);
-        }, this));
-        return null;
+        if (res.statusCode !== 200) {
+          return this.emit("error", new Error('invalid status code - is: HTTP ' + res.statusCode + ' - should: HTTP 200'));
+        } else {
+          res.setEncoding(encoding);
+          res.on("data", __bind(function(chunk) {
+            return txtA.push(chunk);
+          }, this));
+          res.on("end", __bind(function() {
+            txt = txtA.join('');
+            this.emit("crawled", txt);
+            return this.parse(txt);
+          }, this));
+          return null;
+        }
       }, this));
       req.setHeader("User-Agent", user_agent);
       req.end();
-      return null;
+      null;
+      return req.on('error', __bind(function(e) {
+        return this.emit("error", e);
+      }, this));
     };
     RobotsTxt.prototype.parse = function(txt) {
       var currUserAgentGroup, evaluate, line, lineA, line_counter, myGateKeeper, _i, _len;
@@ -293,10 +300,10 @@
         line = lineA[_i];
         evaluate(line, ++line_counter);
       }
-      if (myGateKeeper) {
+      if (myGateKeeper != null) {
         return this.emit("ready", myGateKeeper);
       } else {
-        return this.emit("error", myGateKeeper);
+        return this.emit("error", 'gatekeeper is ' + typeof myGateKeeper);
       }
     };
     return RobotsTxt;

@@ -4,7 +4,7 @@ parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
 #helper functions
-
+#console.log 'HHHHHHHHHHHHHEEEEEEEEEEEEEEELLLLLLLLLLLLOOOOOOOOOOO'
 #a special escape function 
 #special as is does not escape * 
 RegExp.specialEscape = (str) ->
@@ -179,19 +179,30 @@ class RobotsTxt extends EventEmitter
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
+    groupGroupsA = []
+    
+    #dirty function, wordk 
+    #copyrules = (groupname) ->
+    #  myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules;
+    #  console.log 'groupname '+groupname
+    
     evaluate = (line, nr) =>
       line = _.trim line
       unless _(line).startsWith('#')
         unless line == ''
-          kvA = line.split ":"
+          #kvA = line.split ":"
+          doublepoint=line.indexOf(':');
+          kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];
+          #console.log(kvA);
 
           
           #only work with valid key value pairs
           if kvA.length isnt 2
             return false
           #and skipt all blank rules
-          else if kvA.length is 2 and kvA[1] is ''
-            return false
+          #hmmm but an invalid rule might still have grouping impact
+          #else if kvA.length is 2 and kvA[1] is ''
+          #  return false
           
           
           
@@ -199,60 +210,82 @@ class RobotsTxt extends EventEmitter
             _(i).trim()
             
           
-            
+          #lowercase all keys 
           kvA[0]=kvA[0].toLowerCase()
-          #uppercase all keys
           if kvA[0] == 'user-agent'
             #if this is the first group section, create a new gatekeeper
             if not myGateKeeper
               myGateKeeper = new GateKeeper(@user_agent)
-            currUserAgentGroup=myGateKeeper.groups[kvA[1].toLowerCase()] = 
+            
+           
+            # look if there are group to groups
+            if currUserAgentGroup?.rules?.length == 0
+              groupGroupsA.push currUserAgentGroup.name
+              #console.log groupGroupsA
+            else
+              groupGroupsA = []
+            
+             #create a new useragent group
+            currUserAgentGroup = myGateKeeper.groups[kvA[1].toLowerCase()] =
+              name: kvA[1].toLowerCase()
               rules: []
+            
+            #if there are groups to group we make a reference to the current rules object
+            if groupGroupsA?.length > 0
+              ((groupname) -> (myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules)) groupname for groupname in groupGroupsA
+            
+              
           
           else if kvA[0] == 'sitemap'
-              #because we used : to split the line, and there is an : in http://
-              kvA.shift()
-              url = kvA.join ':'
+              #whatever we do with the sitemap
               
           else
-            regExStr = kvA[1];
-            if regExStr[0] != '/'
-              regExStr='/'+regExStr
-            regExStr = RegExp.specialEscape regExStr
-            
-            regExStr = regExStr.replace /\*/g,'.*'
-            if regExStr[regExStr.length-1] != '$'
-              if regExStr[regExStr.length-1] != '*'
-                regExStr=regExStr+'.*'
-                
-            #The path value is used as a basis to determine whether or not a rule applies to a specific URL on a site. With the exception of wildcards, the path is used to match the beginning of a URL (and any valid URLs that start with the same path).
-            
-            regExStr='^'+regExStr
-            rx = new RegExp regExStr
-            if currUserAgentGroup
-              currUserAgentGroup.rules.push (url) ->
-                if url
-                  url_match = url.match rx
-                  if url_match
-                    return r =
-                      url: url
-                      line: line
-                      linenumber: nr 
-                      priority: kvA[1].length
-                      type: kvA[0]
-                      rule: kvA[1]
-                      regexstr: regExStr
-                      regex: rx
-                      match: url_match
+            regExStr = kvA[1]+'';
+            if regExStr == ''
+              # invalid rule, but we clean all groups to group
+              groupGroupsA = []
+            else
+              if regExStr[0] != '/'
+                regExStr='/'+regExStr
+              regExStr = RegExp.specialEscape regExStr
+              
+              regExStr = regExStr.replace /\*/g,'.*'
+              if regExStr[regExStr.length-1] != '$'
+                if regExStr[regExStr.length-1] != '*'
+                  regExStr=regExStr+'.*'
+                  
+              #The path value is used as a basis to determine whether or not a rule applies to a specific URL on a site. With the exception of wildcards, the path is used to match the beginning of a URL (and any valid URLs that start with the same path).
+              
+              regExStr='^'+regExStr
+              rx = new RegExp regExStr
+              if currUserAgentGroup
+                currUserAgentGroup.rules.push (url) ->
+                  if url
+                    url_match = url.match rx
+                    if url_match
+                      return r =
+                        url: url
+                        line: line
+                        linenumber: nr 
+                        priority: kvA[1].length
+                        type: kvA[0]
+                        rule: kvA[1]
+                        regexstr: regExStr
+                        regex: rx
+                        match: url_match
+                    else
+                      false
                   else
                     false
-                else
-                  false
       else
         #comments line get parse here
     line_counter=0
     evaluate line, ++line_counter for line in lineA
     if myGateKeeper?
+      #console.log 'my freaking gatekeeper'
+      #console.log myGateKeeper
+      #console.log myGateKeeper.groups
+      #console.log 'my freaking gatekeeper end'
       @emit "ready", myGateKeeper
     else
       @emit "error", 'gatekeeper is '+ typeof myGateKeeper

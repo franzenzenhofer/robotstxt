@@ -218,22 +218,22 @@
       }, this));
     };
     RobotsTxt.prototype.parse = function(txt) {
-      var currUserAgentGroup, evaluate, line, lineA, line_counter, myGateKeeper, _i, _len;
+      var currUserAgentGroup, evaluate, groupGroupsA, line, lineA, line_counter, myGateKeeper, _i, _len;
       if (txt == null) {
         txt = txt;
       }
       lineA = txt.split("\n");
       myGateKeeper = void 0;
       currUserAgentGroup = false;
+      groupGroupsA = [];
       evaluate = __bind(function(line, nr) {
-        var kvA, regExStr, rx, url;
+        var doublepoint, groupname, kvA, regExStr, rx, _i, _len, _ref, _results;
         line = _.trim(line);
         if (!_(line).startsWith('#')) {
           if (line !== '') {
-            kvA = line.split(":");
+            doublepoint = line.indexOf(':');
+            kvA = [line.substr(0, doublepoint), line.substr(doublepoint + 1)];
             if (kvA.length !== 2) {
-              return false;
-            } else if (kvA.length === 2 && kvA[1] === '') {
               return false;
             }
             kvA = kvA.map(function(i) {
@@ -244,50 +244,69 @@
               if (!myGateKeeper) {
                 myGateKeeper = new GateKeeper(this.user_agent);
               }
-              return currUserAgentGroup = myGateKeeper.groups[kvA[1].toLowerCase()] = {
+              if ((currUserAgentGroup != null ? (_ref = currUserAgentGroup.rules) != null ? _ref.length : void 0 : void 0) === 0) {
+                groupGroupsA.push(currUserAgentGroup.name);
+              } else {
+                groupGroupsA = [];
+              }
+              currUserAgentGroup = myGateKeeper.groups[kvA[1].toLowerCase()] = {
+                name: kvA[1].toLowerCase(),
                 rules: []
               };
-            } else if (kvA[0] === 'sitemap') {
-              kvA.shift();
-              return url = kvA.join(':');
-            } else {
-              regExStr = kvA[1];
-              if (regExStr[0] !== '/') {
-                regExStr = '/' + regExStr;
-              }
-              regExStr = RegExp.specialEscape(regExStr);
-              regExStr = regExStr.replace(/\*/g, '.*');
-              if (regExStr[regExStr.length - 1] !== '$') {
-                if (regExStr[regExStr.length - 1] !== '*') {
-                  regExStr = regExStr + '.*';
+              if ((groupGroupsA != null ? groupGroupsA.length : void 0) > 0) {
+                _results = [];
+                for (_i = 0, _len = groupGroupsA.length; _i < _len; _i++) {
+                  groupname = groupGroupsA[_i];
+                  _results.push((function(groupname) {
+                    return myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules;
+                  })(groupname));
                 }
+                return _results;
               }
-              regExStr = '^' + regExStr;
-              rx = new RegExp(regExStr);
-              if (currUserAgentGroup) {
-                return currUserAgentGroup.rules.push(function(url) {
-                  var r, url_match;
-                  if (url) {
-                    url_match = url.match(rx);
-                    if (url_match) {
-                      return r = {
-                        url: url,
-                        line: line,
-                        linenumber: nr,
-                        priority: kvA[1].length,
-                        type: kvA[0],
-                        rule: kvA[1],
-                        regexstr: regExStr,
-                        regex: rx,
-                        match: url_match
-                      };
+            } else if (kvA[0] === 'sitemap') {
+              ;
+            } else {
+              regExStr = kvA[1] + '';
+              if (regExStr === '') {
+                return groupGroupsA = [];
+              } else {
+                if (regExStr[0] !== '/') {
+                  regExStr = '/' + regExStr;
+                }
+                regExStr = RegExp.specialEscape(regExStr);
+                regExStr = regExStr.replace(/\*/g, '.*');
+                if (regExStr[regExStr.length - 1] !== '$') {
+                  if (regExStr[regExStr.length - 1] !== '*') {
+                    regExStr = regExStr + '.*';
+                  }
+                }
+                regExStr = '^' + regExStr;
+                rx = new RegExp(regExStr);
+                if (currUserAgentGroup) {
+                  return currUserAgentGroup.rules.push(function(url) {
+                    var r, url_match;
+                    if (url) {
+                      url_match = url.match(rx);
+                      if (url_match) {
+                        return r = {
+                          url: url,
+                          line: line,
+                          linenumber: nr,
+                          priority: kvA[1].length,
+                          type: kvA[0],
+                          rule: kvA[1],
+                          regexstr: regExStr,
+                          regex: rx,
+                          match: url_match
+                        };
+                      } else {
+                        return false;
+                      }
                     } else {
                       return false;
                     }
-                  } else {
-                    return false;
-                  }
-                });
+                  });
+                }
               }
             }
           }

@@ -75,6 +75,12 @@ robotsTxt events
   
     #thrown after all lines of the robots.txt are parsed
     robotsTxt.on 'ready' (gate_keeper)
+  
+    #if something did not quite work
+    #note: it's a good idea to always implement this error listener 
+    #to prevent strange looking error messages in case there are internet connection issues
+    robotsTxt.on 'error' (error)
+
     
 
 **NOTES**

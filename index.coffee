@@ -4,7 +4,7 @@ parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
 #helper functions
-#console.log 'HHHHHHHHHHHHHEEEEEEEEEEEEEEELLLLLLLLLLLLOOOOOOOOOOO'
+##console.log 'HHHHHHHHHHHHHEEEEEEEEEEEEEEELLLLLLLLLLLLOOOOOOOOOOO'
 #a special escape function 
 #special as is does not escape * 
 RegExp.specialEscape = (str) ->
@@ -28,8 +28,8 @@ class GateKeeper
       if matchO
         if matchO.type is 'disallow'
           if matchO.priority > prio
-            console.log matchO
-            console.log 'D I S A L L O W'
+            #console.log matchO
+            #console.log 'D I S A L L O W'
             r = false
             prio = matchO.priority
           #this undefined is deprecated, as allow always wins  
@@ -37,9 +37,9 @@ class GateKeeper
             #r = undefined
         else if matchO.type is 'allow'
           if matchO.priority >= prio
-            console.log 'A L L O W S T A R T'
-            console.log matchO
-            console.log 'A L L O W E N D'
+            #console.log 'A L L O W S T A R T'
+            #console.log matchO
+            #console.log 'A L L O W E N D'
             r = true
           prio = matchO.priority
           #this undefined is deprecated, as allow always wins
@@ -182,7 +182,7 @@ class RobotsTxt extends EventEmitter
       )
       
   parse: (txt=txt) =>
-    #console.log ('PARSED')
+    ##console.log ('PARSED')
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
@@ -191,7 +191,7 @@ class RobotsTxt extends EventEmitter
     #dirty function, wordk 
     #copyrules = (groupname) ->
     #  myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules;
-    #  console.log 'groupname '+groupname
+    #  #console.log 'groupname '+groupname
     
     evaluate = (line, nr) =>
       line = _.trim line
@@ -200,7 +200,7 @@ class RobotsTxt extends EventEmitter
           #kvA = line.split ":"
           doublepoint=line.indexOf(':');
           kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];
-          #console.log(kvA);
+          ##console.log(kvA);
 
           
           #only work with valid key value pairs
@@ -228,7 +228,7 @@ class RobotsTxt extends EventEmitter
             # look if there are group to groups
             if currUserAgentGroup?.rules?.length == 0
               groupGroupsA.push currUserAgentGroup.name
-              #console.log groupGroupsA
+              ##console.log groupGroupsA
             else
               groupGroupsA = []
             
@@ -289,10 +289,10 @@ class RobotsTxt extends EventEmitter
     line_counter=0
     evaluate line, ++line_counter for line in lineA
     if myGateKeeper?
-      #console.log 'my freaking gatekeeper'
-      #console.log myGateKeeper
-      #console.log myGateKeeper.groups
-      #console.log 'my freaking gatekeeper end'
+      ##console.log 'my freaking gatekeeper'
+      ##console.log myGateKeeper
+      ##console.log myGateKeeper.groups
+      ##console.log 'my freaking gatekeeper end'
       @emit "ready", myGateKeeper
     else
       @emit "error", 'gatekeeper is '+ typeof myGateKeeper

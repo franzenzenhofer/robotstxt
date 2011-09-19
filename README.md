@@ -111,4 +111,6 @@ ToDo
 Resources
 ---
   - [Robots.txt Specifications by Google](http://code.google.com/web/controlcrawlindex/docs/robots_txt.html)
+  - a web interface can be found at [https://github.com/franzenzenhofer/webrobotstxt](https://github.com/franzenzenhofer/webrobotstxt)
+
  

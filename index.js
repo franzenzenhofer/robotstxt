@@ -33,14 +33,14 @@
         if (matchO) {
           if (matchO.type === 'disallow') {
             if (matchO.priority > prio) {
-              r = false;
-              return prio = matchO.priority;
+              prio = matchO.priority;
+              return r = false;
             }
           } else if (matchO.type === 'allow') {
             if (matchO.priority >= prio) {
-              r = true;
+              prio = matchO.priority;
+              return r = true;
             }
-            return prio = matchO.priority;
           }
         }
       };

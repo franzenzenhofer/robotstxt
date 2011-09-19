@@ -144,6 +144,17 @@
         return k;
       }
     };
+    GateKeeper.prototype.getCrawlDelay = function(user_agent) {
+      var delay, _ref;
+      if (user_agent == null) {
+        user_agent = this.user_agent;
+      }
+      user_agent = user_agent.toLowerCase();
+      delay = ((_ref = this.groups[user_agent]) != null ? _ref.crawl_delay : void 0) || this.groups['*'].crawl_delay;
+      if (delay != null) {
+        return Number(delay);
+      }
+    };
     GateKeeper.prototype.groups = {};
     GateKeeper.prototype.user_agent = null;
     GateKeeper.prototype.user_agent_group = {
@@ -267,6 +278,10 @@
               }
             } else if (kvA[0] === 'sitemap') {
               ;
+            } else if (kvA[0] === 'crawl-delay') {
+              if (currUserAgentGroup) {
+                return currUserAgentGroup.crawl_delay = kvA[1];
+              }
             } else {
               regExStr = kvA[1] + '';
               if (regExStr === '') {

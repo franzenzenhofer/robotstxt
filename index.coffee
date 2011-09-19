@@ -130,7 +130,17 @@ class GateKeeper
             k = key
       @user_agent_group[user_agent] = k
       k
-    
+
+  #return the requested Crawl-delay for ...
+  #  ... the specified user agent (if specified)
+  #  ... the configured user agent (if present)
+  #  ... the default user agent
+  #if there is no match, undefined is returned.
+  getCrawlDelay: (user_agent = @user_agent) ->
+    user_agent = user_agent.toLowerCase()
+    delay = @groups[user_agent]?.crawl_delay or @groups['*'].crawl_delay
+    Number delay if delay?
+
   groups: {}
   user_agent: null
   user_agent_group: {'*':'*'}
@@ -247,7 +257,12 @@ class RobotsTxt extends EventEmitter
           
           else if kvA[0] == 'sitemap'
               #whatever we do with the sitemap
-              
+
+          else if kvA[0] == 'crawl-delay'
+            if currUserAgentGroup
+              currUserAgentGroup.crawl_delay = kvA[1]
+            #TODO: What do we do if there is no currUserAgentGroup?
+
           else
             regExStr = kvA[1]+'';
             if regExStr == ''

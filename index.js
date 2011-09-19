@@ -33,12 +33,19 @@
         if (matchO) {
           if (matchO.type === 'disallow') {
             if (matchO.priority > prio) {
-              return r = false;
+              console.log(matchO);
+              console.log('D I S A L L O W');
+              r = false;
+              return prio = matchO.priority;
             }
           } else if (matchO.type === 'allow') {
             if (matchO.priority >= prio) {
-              return r = true;
+              console.log('A L L O W S T A R T');
+              console.log(matchO);
+              console.log('A L L O W E N D');
+              r = true;
             }
+            return prio = matchO.priority;
           }
         }
       };

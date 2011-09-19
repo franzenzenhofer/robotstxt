@@ -28,13 +28,20 @@ class GateKeeper
       if matchO
         if matchO.type is 'disallow'
           if matchO.priority > prio
+            console.log matchO
+            console.log 'D I S A L L O W'
             r = false
+            prio = matchO.priority
           #this undefined is deprecated, as allow always wins  
           #else if matchO.priority is prio and (r is true or r is undefined)
             #r = undefined
         else if matchO.type is 'allow'
           if matchO.priority >= prio
+            console.log 'A L L O W S T A R T'
+            console.log matchO
+            console.log 'A L L O W E N D'
             r = true
+          prio = matchO.priority
           #this undefined is deprecated, as allow always wins
           #else if matchO.priority is prio and (r is false or r is undefined)
             #r = undefined

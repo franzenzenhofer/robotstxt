@@ -208,9 +208,8 @@
         method: 'GET'
       };
       req = handler.request(options, __bind(function(res) {
-        if (res.statusCode !== 200) {
-          return this.emit("error", new Error('invalid status code - is: HTTP ' + res.statusCode + ' - should: HTTP 200'));
-        } else {
+        var _ref, _ref2;
+        if ((200 <= (_ref = res.statusCode) && _ref < 300)) {
           res.setEncoding(encoding);
           res.on("data", __bind(function(chunk) {
             return txtA.push(chunk);
@@ -221,6 +220,12 @@
             return this.parse(txt);
           }, this));
           return null;
+        } else if ((300 <= (_ref2 = res.statusCode) && _ref2 < 400)) {
+          req.end();
+          this.uri = parseUri(res.headers.location);
+          return this.crawl();
+        } else {
+          return this.emit("error", new Error('invalid status code - is: HTTP ' + res.statusCode + ' - should: HTTP 200'));
         }
       }, this));
       req.setHeader("User-Agent", user_agent);

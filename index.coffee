@@ -179,10 +179,14 @@ class RobotsTxt extends EventEmitter
               @emit "crawled", txt
               @parse txt
             null
-        else if 300 <= res.statusCode < 400 # 3xx, redirect
-            req.end()
-            @uri = parseUri(res.headers.location)
-            return @crawl()
+        # removed HTTP 3xx redirects, as googlebot does not support it either
+        # as the robots.txt protocol is domain dependend
+        # and only valid if it's really the /robots.txt file
+        # yeah, the robots.txt is a pretty stupid protocol (but good enough)
+        #else if 300 <= res.statusCode < 400 # 3xx, redirect
+        #    req.end()
+        #    @uri = parseUri(res.headers.location)
+        #    return @crawl()
         else
             @emit "error", new Error 'invalid status code - is: HTTP '+res.statusCode+' - should: HTTP 200'
     #set the headers

@@ -5,8 +5,8 @@ _ =  require "underscore"
 _.mixin require 'underscore.string'
 #helper functions
 ##console.log 'HHHHHHHHHHHHHEEEEEEEEEEEEEEELLLLLLLLLLLLOOOOOOOOOOO'
-#a special escape function 
-#special as is does not escape * 
+#a special escape function
+#special as is does not escape *
 RegExp.specialEscape = (str) ->
   specials = new RegExp("[.+?|()\\[\\]{}\\\\]", "g")
   str.replace(specials, "\\$&")
@@ -16,7 +16,7 @@ RegExp.specialEscape = (str) ->
 class GateKeeper
   constructor: (user_agent) ->
     @setUserAgent(user_agent)
-    
+
   #asks the gatekeeper if a given url is allowed
   #returnes true if it is allowed
   #holds a hidden _allowed value that makes this method reuseable for isDisallowed
@@ -33,10 +33,10 @@ class GateKeeper
             prio = matchO.priority
             r = false
 
-          #this undefined is deprecated, as allow always wins  
+          #this undefined is deprecated, as allow always wins
           #else if matchO.priority is prio and (r is true or r is undefined)
             #r = undefined
-            
+
         else if matchO.type is 'allow'
           if matchO.priority >= prio
             #console.log 'A L L O W S T A R T'
@@ -47,27 +47,27 @@ class GateKeeper
           #this undefined is deprecated, as allow always wins
           #else if matchO.priority is prio and (r is false or r is undefined)
             #r = undefined
-            
-    
+
+
     #loop over the rules
     check matchO for matchO in a
-    
+
     if _allowed
       r
     else
       !r
-  
-  #returnes true if an url is disallowed for crawling 
+
+  #returnes true if an url is disallowed for crawling
   isDisallowed: (url) ->
     @isAllowed(url, false)
-  
+
   #determines the group to use and iterates over all rules
   whatsUp: (url) ->
     url = @cleanUrl(url)
     group = @getGroup()
     r = @groups[group].rules.map (e) ->
       e(url)
-  
+
   why: (url) ->
     url = @cleanUrl(url)
     a = @whatsUp(url)
@@ -89,9 +89,9 @@ class GateKeeper
           else
             conflict = true
             ra.unshift matchO
-    
+
     test matchO for matchO in a
-    r = 
+    r =
       url: url
       rules: ra
       allowed: @isAllowed(url)
@@ -99,7 +99,7 @@ class GateKeeper
       group: @getGroup()
       user_agent: @user_agent
       conflict: conflict
-  
+
   cleanUrl: (url) ->
     xu = parseUri(url)
     if xu.path and xu.path isnt ''
@@ -107,12 +107,12 @@ class GateKeeper
         return xu.path+'?'+xu.query
       else
         return xu.path
-      
-    
-  
+
+
+
   setUserAgent: (user_agent) ->
     @user_agent = user_agent.toLowerCase()
-  
+
   #determines which User-Agent group to use
   #default is *
   #most specific (longes) rule wins
@@ -130,7 +130,17 @@ class GateKeeper
             k = key
       @user_agent_group[user_agent] = k
       k
-    
+
+  #return the requested Crawl-delay for ...
+  #  ... the specified user agent (if specified)
+  #  ... the configured user agent (if present)
+  #  ... the default user agent
+  #if there is no match, undefined is returned.
+  getCrawlDelay: (user_agent = @user_agent) ->
+    user_agent = user_agent.toLowerCase()
+    delay = @groups[user_agent]?.crawl_delay or @groups['*'].crawl_delay
+    Number delay if delay?
+
   groups: {}
   user_agent: null
   user_agent_group: {'*':'*'}
@@ -139,14 +149,14 @@ class GateKeeper
 class RobotsTxt extends EventEmitter
   txt = ''
   txtA = []
-  
+
   rm = @
   constructor: (@url, @user_agent="a coffee GateKeeper") ->
     if @url
       @uri = parseUri(@url)
-      @crawl() 
-  
-  
+      @crawl()
+
+
   crawl: (protocol=@uri.protocol, host=@uri.host, port=@uri.port, path=@uri.path,  user_agent=@user_agent, encoding='utf8') ->
     txt = ''
     txtA = []
@@ -158,43 +168,45 @@ class RobotsTxt extends EventEmitter
         if protocol == "https" then 443 else 80
       path: path
       method: 'GET'
-      
-    req = handler.request options, (res) => 
-      if res.statusCode isnt 200
-        @emit "error", new Error 'invalid status code - is: HTTP '+res.statusCode+' - should: HTTP 200'
-      else
-        res.setEncoding(encoding)
-        
-        res.on "data", (chunk) =>
-          txtA.push chunk
-        
-        res.on "end", =>
-          txt=txtA.join ''
-          @emit "crawled", txt
-          @parse txt
-        null
+
+    req = handler.request options, (res) =>
+        if 200 <= res.statusCode < 300 # 2xx, Successful
+            res.setEncoding(encoding)
+            res.on "data", (chunk) =>
+              txtA.push chunk
+            res.on "end", =>
+              txt=txtA.join ''
+              @emit "crawled", txt
+              @parse txt
+            null
+        else if 300 <= res.statusCode < 400 # 3xx, redirect
+            req.end()
+            @uri = parseUri(res.headers.location)
+            return @crawl()
+        else
+            @emit "error", new Error 'invalid status code - is: HTTP '+res.statusCode+' - should: HTTP 200'
     #set the headers
     req.setHeader "User-Agent",user_agent
     #todo: allow more than one header
     req.end()
     null
-    
+
     req.on('error', (e) =>
         @emit "error", e
       )
-      
+
   parse: (txt=txt) =>
     ##console.log ('PARSED')
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
     groupGroupsA = []
-    
-    #dirty function, wordk 
+
+    #dirty function, wordk
     #copyrules = (groupname) ->
     #  myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules;
     #  #console.log 'groupname '+groupname
-    
+
     evaluate = (line, nr) =>
       line = _.trim line
       unless _(line).startsWith('#')
@@ -204,7 +216,7 @@ class RobotsTxt extends EventEmitter
           kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];
           ##console.log(kvA);
 
-          
+
           #only work with valid key value pairs
           if kvA.length isnt 2
             return false
@@ -212,42 +224,47 @@ class RobotsTxt extends EventEmitter
           #hmmm but an invalid rule might still have grouping impact
           #else if kvA.length is 2 and kvA[1] is ''
           #  return false
-          
-          
-          
+
+
+
           kvA = kvA.map (i) ->
             _(i).trim()
-            
-          
-          #lowercase all keys 
+
+
+          #lowercase all keys
           kvA[0]=kvA[0].toLowerCase()
           if kvA[0] == 'user-agent'
             #if this is the first group section, create a new gatekeeper
             if not myGateKeeper
               myGateKeeper = new GateKeeper(@user_agent)
-            
-           
+
+
             # look if there are group to groups
             if currUserAgentGroup?.rules?.length == 0
               groupGroupsA.push currUserAgentGroup.name
               ##console.log groupGroupsA
             else
               groupGroupsA = []
-            
+
              #create a new useragent group
             currUserAgentGroup = myGateKeeper.groups[kvA[1].toLowerCase()] =
               name: kvA[1].toLowerCase()
               rules: []
-            
+
             #if there are groups to group we make a reference to the current rules object
             if groupGroupsA?.length > 0
               ((groupname) -> (myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules)) groupname for groupname in groupGroupsA
-            
-              
-          
+
+
+
           else if kvA[0] == 'sitemap'
               #whatever we do with the sitemap
-              
+
+          else if kvA[0] == 'crawl-delay'
+            if currUserAgentGroup
+              currUserAgentGroup.crawl_delay = kvA[1]
+            #TODO: What do we do if there is no currUserAgentGroup?
+
           else
             regExStr = kvA[1]+'';
             if regExStr == ''
@@ -257,14 +274,14 @@ class RobotsTxt extends EventEmitter
               if regExStr[0] != '/'
                 regExStr='/'+regExStr
               regExStr = RegExp.specialEscape regExStr
-              
+
               regExStr = regExStr.replace /\*/g,'.*'
               if regExStr[regExStr.length-1] != '$'
                 if regExStr[regExStr.length-1] != '*'
                   regExStr=regExStr+'.*'
-                  
+
               #The path value is used as a basis to determine whether or not a rule applies to a specific URL on a site. With the exception of wildcards, the path is used to match the beginning of a URL (and any valid URLs that start with the same path).
-              
+
               regExStr='^'+regExStr
               rx = new RegExp regExStr
               if currUserAgentGroup
@@ -275,7 +292,7 @@ class RobotsTxt extends EventEmitter
                       return r =
                         url: url
                         line: line
-                        linenumber: nr 
+                        linenumber: nr
                         priority: kvA[1].length
                         type: kvA[0]
                         rule: kvA[1]
@@ -298,7 +315,7 @@ class RobotsTxt extends EventEmitter
       @emit "ready", myGateKeeper
     else
       @emit "error", 'gatekeeper is '+ typeof myGateKeeper
-      
+
 createRobotsTxt = (url, user_agent = 'Mozilla/5.0 (compatible; Open-Source-Coffee-Script-Robots-Txt-Checker/2.1; +http://example.com/bot.html)') ->
   new RobotsTxt(url, user_agent)
 

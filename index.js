@@ -255,7 +255,6 @@
             } else {
               kvA = [line.substr(0, doublepoint), line.substr(doublepoint + 1)];
             }
-            console.log(kvA);
             if (kvA.length !== 2) {
               return false;
             }

@@ -226,7 +226,7 @@ class RobotsTxt extends EventEmitter
             kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1,line.indexOf('#')-(doublepoint+1))];
           else
             kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];
-          console.log(kvA);
+          #console.log(kvA);
 
 
           #only work with valid key value pairs

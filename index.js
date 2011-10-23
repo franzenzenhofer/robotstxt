@@ -112,7 +112,11 @@
         if (xu.query && xu.query !== '') {
           return xu.path + '?' + xu.query;
         } else {
-          return xu.path;
+          if (_(url).endsWith('?')) {
+            return xu.path + '?';
+          } else {
+            return xu.path;
+          }
         }
       }
     };
@@ -208,7 +212,7 @@
         method: 'GET'
       };
       req = handler.request(options, __bind(function(res) {
-        var _ref, _ref2;
+        var _ref;
         if ((200 <= (_ref = res.statusCode) && _ref < 300)) {
           res.setEncoding(encoding);
           res.on("data", __bind(function(chunk) {
@@ -220,10 +224,6 @@
             return this.parse(txt);
           }, this));
           return null;
-        } else if ((300 <= (_ref2 = res.statusCode) && _ref2 < 400)) {
-          req.end();
-          this.uri = parseUri(res.headers.location);
-          return this.crawl();
         } else {
           return this.emit("error", new Error('invalid status code - is: HTTP ' + res.statusCode + ' - should: HTTP 200'));
         }
@@ -250,7 +250,12 @@
         if (!_(line).startsWith('#')) {
           if (line !== '') {
             doublepoint = line.indexOf(':');
-            kvA = [line.substr(0, doublepoint), line.substr(doublepoint + 1)];
+            if (_(line).includes('#')) {
+              kvA = [line.substr(0, doublepoint), line.substr(doublepoint + 1, line.indexOf('#') - (doublepoint + 1))];
+            } else {
+              kvA = [line.substr(0, doublepoint), line.substr(doublepoint + 1)];
+            }
+            console.log(kvA);
             if (kvA.length !== 2) {
               return false;
             }
@@ -281,9 +286,7 @@
                 }
                 return _results;
               }
-            } else if (kvA[0] === 'sitemap') {
-              ;
-            } else if (kvA[0] === 'crawl-delay') {
+            } else if (kvA[0] === 'sitemap') {} else if (kvA[0] === 'crawl-delay') {
               if (currUserAgentGroup) {
                 return currUserAgentGroup.crawl_delay = kvA[1];
               }
@@ -333,7 +336,7 @@
             }
           }
         } else {
-          ;
+
         }
       }, this);
       line_counter = 0;

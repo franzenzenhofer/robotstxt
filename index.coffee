@@ -106,7 +106,10 @@ class GateKeeper
       if xu.query and xu.query isnt ''
         return xu.path+'?'+xu.query
       else
-        return xu.path
+        if _(url).endsWith('?')
+          return xu.path+'?'
+        else
+          return xu.path
 
 
 
@@ -216,9 +219,14 @@ class RobotsTxt extends EventEmitter
       unless _(line).startsWith('#')
         unless line == ''
           #kvA = line.split ":"
-          doublepoint=line.indexOf(':');
-          kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];
-          ##console.log(kvA);
+          # get rid of anythiny behind an #
+
+          doublepoint=line.indexOf(':')
+          if _(line).includes('#')
+            kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1,line.indexOf('#')-(doublepoint+1))];
+          else
+            kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];
+          console.log(kvA);
 
 
           #only work with valid key value pairs

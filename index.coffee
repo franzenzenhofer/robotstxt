@@ -10,19 +10,23 @@ RegExp.specialEscape = (str) ->
   str.replace(specials, "\\$&")
 
 #GateKeeper
-#GateKeeper gets returned afte a robots.txt is parsed
+#GateKeeper gets returned after a robots.txt is parsed
 class GateKeeper
   constructor: (user_agent) ->
+    #console.dir(@)
+    @user_agent= null
     @setUserAgent(user_agent)
+    @groups= {}
+    @user_agent_group= {'*':'*'}
 
   #asks the gatekeeper if a given url is allowed
   #returnes true if it is allowed
   #holds a hidden _allowed value that makes this method reuseable for isDisallowed
-  isAllowed: (url, _allowed = true) ->
+  isAllowed: (url, _allowed = true) =>
     a = @whatsUp(url)
     r = true
     prio = 0
-    check = (matchO) ->
+    check = (matchO) =>
       if matchO
         if matchO.type is 'disallow'
           if matchO.priority > prio
@@ -56,22 +60,22 @@ class GateKeeper
       !r
 
   #returnes true if an url is disallowed for crawling
-  isDisallowed: (url) ->
+  isDisallowed: (url) =>
     @isAllowed(url, false)
 
   #determines the group to use and iterates over all rules
-  whatsUp: (url) ->
+  whatsUp: (url) =>
     url = @cleanUrl(url)
     group = @getGroup()
-    r = @groups[group].rules.map (e) ->
+    r = @groups[group].rules.map (e) =>
       e(url)
 
-  why: (url) ->
+  why: (url) =>
     url = @cleanUrl(url)
     a = @whatsUp(url)
     ra = []
     conflict = false
-    test = (matchO) ->
+    test = (matchO) =>
       if matchO
         if not ra[0]
           ra.push matchO
@@ -98,7 +102,7 @@ class GateKeeper
       user_agent: @user_agent
       conflict: conflict
 
-  cleanUrl: (url) ->
+  cleanUrl: (url) =>
     xu = parseUri(url)
     if xu.path and xu.path isnt ''
       if xu.query and xu.query isnt ''
@@ -111,15 +115,19 @@ class GateKeeper
 
 
 
-  setUserAgent: (user_agent) ->
+  setUserAgent: (user_agent) =>
     @user_agent = user_agent.toLowerCase()
 
   #determines which User-Agent group to use
   #default is *
   #most specific (longes) rule wins
-  getGroup: (user_agent = @user_agent) ->
+  getGroup: (user_agent = @user_agent) =>
     user_agent = user_agent.toLowerCase()
+    #console.log('getGroup user_agent '+user_agent)
+    #console.log('getGroup @user_agent_group ')
+    #console.dir(@user_agent_group)
     if @user_agent_group[user_agent]
+      #console.log('getGroup @user_agent_group[user_agent] '+@user_agent_group[user_agent])
       return @user_agent_group[user_agent]
     else
       k = '*'
@@ -137,14 +145,12 @@ class GateKeeper
   #  ... the configured user agent (if present)
   #  ... the default user agent
   #if there is no match, undefined is returned.
-  getCrawlDelay: (user_agent = @user_agent) ->
+  getCrawlDelay: (user_agent = @user_agent) =>
     user_agent = user_agent.toLowerCase()
     delay = @groups[user_agent]?.crawl_delay or @groups['*'].crawl_delay
     Number delay if delay?
 
-  groups: {}
-  user_agent: null
-  user_agent_group: {'*':'*'}
+
 
 #RobotsTxt is an EventEmitter
 class RobotsTxt extends EventEmitter
@@ -153,12 +159,13 @@ class RobotsTxt extends EventEmitter
 
   rm = @
   constructor: (@url, @user_agent="a coffee GateKeeper") ->
+    #console.dir(@);
     if @url
       @uri = parseUri(@url)
       @crawl()
 
 
-  crawl: (protocol=@uri.protocol, host=@uri.host, port=@uri.port, path=@uri.path,  user_agent=@user_agent, encoding='utf8') ->
+  crawl: (protocol=@uri.protocol, host=@uri.host, port=@uri.port, path=@uri.path,  user_agent=@user_agent, encoding='utf8') =>
     txt = ''
     txtA = []
     handler = require protocol
@@ -233,23 +240,31 @@ class RobotsTxt extends EventEmitter
           if kvA[0] == 'user-agent'
             #if this is the first group section, create a new gatekeeper
             if not myGateKeeper
+              #console.log('NEW GATEKEEPER')
+              delete myGateKeeper
               myGateKeeper = new GateKeeper(@user_agent)
-
+              
 
             # look if there are group to groups
             if currUserAgentGroup?.rules?.length == 0
               groupGroupsA.push currUserAgentGroup.name
-              ##console.log groupGroupsA
+              #console.log groupGroupsA
+              
             else
               groupGroupsA = []
+              
 
              #create a new useragent group
             currUserAgentGroup = myGateKeeper.groups[kvA[1].toLowerCase()] =
               name: kvA[1].toLowerCase()
               rules: []
+            
 
             #if there are groups to group we make a reference to the current rules object
             if groupGroupsA?.length > 0
+              #console.log('if groupGroupsA?.length > 0')
+              #console.dir(groupGroupsA)
+              
               ((groupname) -> (myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules)) groupname for groupname in groupGroupsA
 
 
@@ -305,10 +320,10 @@ class RobotsTxt extends EventEmitter
     line_counter=0
     evaluate line, ++line_counter for line in lineA
     if myGateKeeper?
-      ##console.log 'my freaking gatekeeper'
-      ##console.log myGateKeeper
-      ##console.log myGateKeeper.groups
-      ##console.log 'my freaking gatekeeper end'
+      #console.log 'my freaking gatekeeper'
+      #console.dir myGateKeeper
+      #console.log myGateKeeper.groups
+      #console.log 'my freaking gatekeeper end'
       @emit "ready", myGateKeeper
     else
       @emit "error", 'gatekeeper is '+ typeof myGateKeeper

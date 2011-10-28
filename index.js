@@ -19,7 +19,19 @@
   };
   GateKeeper = (function() {
     function GateKeeper(user_agent) {
+      this.getCrawlDelay = __bind(this.getCrawlDelay, this);
+      this.getGroup = __bind(this.getGroup, this);
+      this.setUserAgent = __bind(this.setUserAgent, this);
+      this.cleanUrl = __bind(this.cleanUrl, this);
+      this.why = __bind(this.why, this);
+      this.whatsUp = __bind(this.whatsUp, this);
+      this.isDisallowed = __bind(this.isDisallowed, this);
+      this.isAllowed = __bind(this.isAllowed, this);      this.user_agent = null;
       this.setUserAgent(user_agent);
+      this.groups = {};
+      this.user_agent_group = {
+        '*': '*'
+      };
     }
     GateKeeper.prototype.isAllowed = function(url, _allowed) {
       var a, check, matchO, prio, r, _i, _len;
@@ -29,7 +41,7 @@
       a = this.whatsUp(url);
       r = true;
       prio = 0;
-      check = function(matchO) {
+      check = __bind(function(matchO) {
         if (matchO) {
           if (matchO.type === 'disallow') {
             if (matchO.priority > prio) {
@@ -43,7 +55,7 @@
             }
           }
         }
-      };
+      }, this);
       for (_i = 0, _len = a.length; _i < _len; _i++) {
         matchO = a[_i];
         check(matchO);
@@ -61,9 +73,9 @@
       var group, r;
       url = this.cleanUrl(url);
       group = this.getGroup();
-      return r = this.groups[group].rules.map(function(e) {
+      return r = this.groups[group].rules.map(__bind(function(e) {
         return e(url);
-      });
+      }, this));
     };
     GateKeeper.prototype.why = function(url) {
       var a, conflict, matchO, r, ra, test, _i, _len;
@@ -71,7 +83,7 @@
       a = this.whatsUp(url);
       ra = [];
       conflict = false;
-      test = function(matchO) {
+      test = __bind(function(matchO) {
         if (matchO) {
           if (!ra[0]) {
             return ra.push(matchO);
@@ -90,7 +102,7 @@
             }
           }
         }
-      };
+      }, this);
       for (_i = 0, _len = a.length; _i < _len; _i++) {
         matchO = a[_i];
         test(matchO);
@@ -159,11 +171,6 @@
         return Number(delay);
       }
     };
-    GateKeeper.prototype.groups = {};
-    GateKeeper.prototype.user_agent = null;
-    GateKeeper.prototype.user_agent_group = {
-      '*': '*'
-    };
     return GateKeeper;
   })();
   RobotsTxt = (function() {
@@ -176,6 +183,7 @@
       this.url = url;
       this.user_agent = user_agent != null ? user_agent : "a coffee GateKeeper";
       this.parse = __bind(this.parse, this);
+      this.crawl = __bind(this.crawl, this);
       if (this.url) {
         this.uri = parseUri(this.url);
         this.crawl();
@@ -264,6 +272,7 @@
             kvA[0] = kvA[0].toLowerCase();
             if (kvA[0] === 'user-agent') {
               if (!myGateKeeper) {
+                delete myGateKeeper;
                 myGateKeeper = new GateKeeper(this.user_agent);
               }
               if ((currUserAgentGroup != null ? (_ref = currUserAgentGroup.rules) != null ? _ref.length : void 0 : void 0) === 0) {
@@ -285,7 +294,9 @@
                 }
                 return _results;
               }
-            } else if (kvA[0] === 'sitemap') {} else if (kvA[0] === 'crawl-delay') {
+            } else if (kvA[0] === 'sitemap') {
+              ;
+            } else if (kvA[0] === 'crawl-delay') {
               if (currUserAgentGroup) {
                 return currUserAgentGroup.crawl_delay = kvA[1];
               }
@@ -335,7 +346,7 @@
             }
           }
         } else {
-
+          ;
         }
       }, this);
       line_counter = 0;

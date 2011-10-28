@@ -1,10 +1,8 @@
-#http://code.google.com/web/controlcrawlindex/docs/robots_txt.html
 EventEmitter = require('events').EventEmitter
 parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
 _.mixin require 'underscore.string'
 #helper functions
-##console.log 'HHHHHHHHHHHHHEEEEEEEEEEEEEEELLLLLLLLLLLLOOOOOOOOOOO'
 #a special escape function
 #special as is does not escape *
 RegExp.specialEscape = (str) ->
@@ -182,14 +180,6 @@ class RobotsTxt extends EventEmitter
               @emit "crawled", txt
               @parse txt
             null
-        # removed HTTP 3xx redirects, as googlebot does not support it either
-        # as the robots.txt protocol is domain dependend
-        # and only valid if it's really the /robots.txt file
-        # yeah, the robots.txt is a pretty stupid protocol (but good enough)
-        #else if 300 <= res.statusCode < 400 # 3xx, redirect
-        #    req.end()
-        #    @uri = parseUri(res.headers.location)
-        #    return @crawl()
         else
             @emit "error", new Error 'invalid status code - is: HTTP '+res.statusCode+' - should: HTTP 200'
     #set the headers
@@ -203,26 +193,21 @@ class RobotsTxt extends EventEmitter
       )
 
   parse: (txt=txt) =>
-    ##console.log ('PARSED')
+    #console.log ('PARSED')
     lineA = txt.split "\n"
     myGateKeeper = undefined
     currUserAgentGroup = false
     groupGroupsA = []
-
-    #dirty function, wordk
-    #copyrules = (groupname) ->
-    #  myGateKeeper.groups[groupname].rules = currUserAgentGroup.rules;
-    #  #console.log 'groupname '+groupname
 
     evaluate = (line, nr) =>
       line = _.trim line
       unless _(line).startsWith('#')
         unless line == ''
           #kvA = line.split ":"
-          # get rid of anythiny behind an #
 
           doublepoint=line.indexOf(':')
           if _(line).includes('#')
+	    # get rid of anything behind an #
             kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1,line.indexOf('#')-(doublepoint+1))];
           else
             kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1)];

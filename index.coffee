@@ -1,7 +1,8 @@
 EventEmitter = require('events').EventEmitter
 parseUri = require './lib/parseuri.js'
 _ =  require "underscore"
-_.mixin require 'underscore.string'
+_.str = require('underscore.string')
+_.mixin _.str.exports()
 #helper functions
 #a special escape function
 #special as is does not escape *
@@ -213,7 +214,7 @@ class RobotsTxt extends EventEmitter
           #kvA = line.split ":"
 
           doublepoint=line.indexOf(':')
-          if _(line).includes('#')
+          if _.str.include(line, '#')
 	    # get rid of anything behind an #
             kvA = [line.substr(0,doublepoint), line.substr(doublepoint+1,line.indexOf('#')-(doublepoint+1))];
           else

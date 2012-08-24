@@ -18,6 +18,8 @@ class GateKeeper
     @user_agent= null
     @setUserAgent(user_agent)
     @groups= {}
+    @sitemaps= []
+    @comments= []
     @user_agent_group= {'*':'*'}
 
   #asks the gatekeeper if a given url is allowed
@@ -272,6 +274,9 @@ class RobotsTxt extends EventEmitter
 
           else if kvA[0] == 'sitemap'
               #whatever we do with the sitemap
+              myGateKeeper.sitemaps.push
+                line: line
+                linenumber: nr
 
           else if kvA[0] == 'crawl-delay'
             if currUserAgentGroup
@@ -298,7 +303,7 @@ class RobotsTxt extends EventEmitter
               regExStr='^'+regExStr
               rx = new RegExp regExStr
               if currUserAgentGroup
-                currUserAgentGroup.rules.push (url) ->
+                rule = (url) ->
                   if url
                     url_match = url.match rx
                     if url_match
@@ -316,8 +321,21 @@ class RobotsTxt extends EventEmitter
                       false
                   else
                     false
+                rule.about =
+                  line: line
+                  linenumber: nr
+                  priority: kvA[1].length
+                  type: kvA[0]
+                  rule: kvA[1]
+                  regexstr: regExStr
+
+                currUserAgentGroup.rules.push rule
       else
         #comments line get parse here
+        myGateKeeper.comments.push 
+          line: line
+          linenumber: nr
+
     line_counter=0
     evaluate line, ++line_counter for line in lineA
     if myGateKeeper?

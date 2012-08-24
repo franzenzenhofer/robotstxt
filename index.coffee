@@ -89,7 +89,7 @@ class GateKeeper
           ra.push matchO
           conflict = false
         else if matchO.priority is ra[0].priority
-          if matchO.type is r[0].type
+          if matchO.type is ra[0].type
             ra.push matchO
           else
             conflict = true

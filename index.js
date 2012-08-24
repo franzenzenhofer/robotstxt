@@ -97,7 +97,7 @@
             ra.push(matchO);
             return conflict = false;
           } else if (matchO.priority === ra[0].priority) {
-            if (matchO.type === r[0].type) {
+            if (matchO.type === ra[0].type) {
               return ra.push(matchO);
             } else {
               conflict = true;
